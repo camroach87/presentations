@@ -127,6 +127,55 @@ server <- function(input, output, session) {
 shinyApp(ui, server)
 ```
 
+## Interactive plots
+
+```{r shiny_interactive}
+ui <- fluidPage(tabsetPanel(
+  tabPanel("Plot",
+           fluidRow(
+             column(8, 
+                    br(),
+                    p("Brush plot to select points to use for statistical analysis."),
+                    plotOutput("plot1", brush = "plot_brush")),
+             column(4, 
+                    br(),
+                    verbatimTextOutput("stats"))
+           )),
+  tabPanel("Data",
+           dataTableOutput("info"))
+))
+
+server <- function(input, output) {
+  output$plot1 <- renderPlot({
+    plot(mtcars$wt, mtcars$mpg, xlab="Weight (1000 lbs)", 
+         ylab="Miles/(US) gallon", main = "Motor Trend Car Road Tests")
+  })
+
+  output$info <- renderDataTable({
+    # With base graphics, need to tell it what the x and y variables are.
+    brushedPoints(mtcars, input$plot_brush, xvar = "wt", yvar = "mpg")
+  })
+  
+  
+  
+  output$stats <- renderText({
+    xy_stats <- function(e) {
+      if(is.null(e)) return("NULL\n")
+      paste0(
+        "Advanced statistical calculations\n\n",
+        "xmin = ", round(e$xmin, 1), "\n",
+        "xmax = ", round(e$xmax, 1), "\n",
+        "ymin = ", round(e$ymin, 1), "\n",
+        "ymax = ", round(e$ymax, 1))
+    }
+    
+    xy_stats(input$plot_brush)
+  })
+}
+
+shinyApp(ui, server)
+```
+
 
 ----
 
