@@ -238,4 +238,4 @@ Can install with
 
 ## For any Python users
 
-Python can achieve similar results using Jupyter notebooks and the interactive package.
+Python can achieve similar results using Jupyter notebooks and the ipywidgets package.
