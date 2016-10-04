@@ -10,26 +10,33 @@ runtime: shiny
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+
+require(leaflet)
+require(RColorBrewer)
+require(DT)
 ```
 
 # What is Shiny?
 
 ## What is Shiny?
 
-Shiny is a wrapper for various HTML, JavaScript and CSS functions. Makes it easy to create attractive web applications.
+Shiny is a wrapper for various HTML, JavaScript and CSS functions.
+
+Shiny makes it easy to create attractive web applications.
 
 ## Can be used for
 
 * Interactive appliations.
-* Presentations (rmarkdown + ioslides + shiny).
+* Presentations (R Markdown + ioslides + Shiny).
 * Dashboards (flexdashboard).
 * A GUI for end-users to perform statistical analyses.
+* Improving your work-flow with Addins (Shiny gadgets).
 
 # Examples
 
-## Interactive Plot
+## Basic shiny
 
-```{r shiny_eruptions}
+```{r shiny_basic}
 inputPanel(
   selectInput("n_breaks", label = "Number of bins:",
               choices = c(10, 20, 35, 50), selected = 20),
@@ -47,12 +54,10 @@ renderPlot({
 })
 ```
 
+
 ## Leaflet
 
-```{r shiny_leaflet, echo=FALSE}
-library(leaflet)
-library(RColorBrewer)
-
+```{r shiny_leaflet}
 ui <- bootstrapPage(
   tags$style(type = "text/css",
              "html, body {width:100%;height:100%}"),
@@ -179,7 +184,11 @@ shinyApp(ui, server)
 
 ----
 
-More examples can be found [here](http://shiny.rstudio.com/gallery/).
+A great starting point is the official [Shiny Tutorial](http://shiny.rstudio.com/tutorial/).
+
+More examples can be found in the [Shiny Gallery](http://shiny.rstudio.com/gallery/).
+
+Many other learning resources are available!
 
 
 ## Structure of a Shiny app
@@ -226,10 +235,17 @@ To run the application
 shinyApp(ui = ui, server = server)
 ```
 
+----
+
+Note that there are quite a few different ways to write a Shiny app.
+
+Don't get confused! It's all the same thing.
+
+
 
 # R Markdown
 
-## Integrating shiny and R Markdown
+## Integrating Shiny and R Markdown
 
 RStudio makes this very easy. Simply select a new RMarkdown document and select shiny.
 
