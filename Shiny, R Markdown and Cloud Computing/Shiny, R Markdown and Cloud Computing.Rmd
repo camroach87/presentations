@@ -26,7 +26,7 @@ Shiny makes it easy to create attractive web applications.
 
 ## Can be used for
 
-* Interactive appliations.
+* Interactive applications.
 * Presentations (R Markdown + ioslides + Shiny).
 * Dashboards (flexdashboard).
 * A GUI for end-users to perform statistical analyses.
@@ -182,7 +182,7 @@ shinyApp(ui, server)
 ```
 
 
-----
+## Resources
 
 A great starting point is the official [Shiny Tutorial](http://shiny.rstudio.com/tutorial/).
 
@@ -247,7 +247,7 @@ Don't get confused! It's all the same thing.
 
 ## Integrating Shiny and R Markdown
 
-RStudio makes this very easy. Simply select a new RMarkdown document and select shiny.
+R Studio makes this very easy. Simply select a new R Markdown document and select shiny.
 
 Works the same as a typical R Markdown document but can now add chunks that contain shiny applications.
 
@@ -255,7 +255,8 @@ One disadvantage is that you can no longer export static html files for distribu
 
 ## Example
 
-*TODO*
+![](figures/R_Markdown_Shiny.png)
+
 
 # Cloud computing
 
@@ -270,7 +271,7 @@ High performance computing options
 
 ## Clusters
 
-Tried using Monarch.
+Monarch is Monash's HPC cluster and is available to all staff and students.
 
 Advantages
 
@@ -284,22 +285,36 @@ Disadvantages
 
 ## Cloud computing
 
+Nectar is available to all staff and students at Australian universities. It is very similar to AWS's EC2 service.
+
 Advantages
 
-* Just wonderful
-* It's just great
-* No really, let me show you
+* Easy to scale.
+* Can host R Studio or Shiny server.
+* Just wonderful.
 
 Disadvantages
 
-* Feel guilty about having so much power available to me and not using it all the time.
+* Need to be careful with security.
 
 # Tying it all together
 
+## Best way to work?
+
+If you're happy writing stand-alone scripts to run on a cluster then Monarch will meet your needs.
+
+However, if you want to create interactive documents with a HPC back-end your best option is Shiny + R Markdown + Nectar.
+
 ## RStudio Server
 
-Can install with
+So is it possible to create Shiny + R Markdown documents with a HPC back-end?
 
+Yes - and easily too!
+
+1. Create an Ubuntu instance on Nectar.
+2. Install R Studio Server.
+3. Set up access group with correct permissions.
+4. Log in from your web browser.
 
 # A snake in the grass
 
