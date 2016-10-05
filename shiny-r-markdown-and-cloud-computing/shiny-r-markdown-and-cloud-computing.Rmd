@@ -28,9 +28,9 @@ Shiny makes it easy to create attractive web applications.
 
 * Interactive applications.
 * Presentations (R Markdown + ioslides + Shiny).
-* Dashboards (flexdashboard).
+* Dashboards ([flexdashboard](http://rmarkdown.rstudio.com/flexdashboard/)).
 * A GUI for end-users to perform statistical analyses.
-* Improving your work-flow with Addins (Shiny gadgets).
+* Improving your work-flow with Addins ([Shiny gadgets](http://shiny.rstudio.com/articles/gadgets.html)).
 
 # Examples
 
@@ -247,7 +247,7 @@ Don't get confused! It's all the same thing.
 
 ## Integrating Shiny and R Markdown
 
-R Studio makes this very easy. Simply select a new R Markdown document and select shiny.
+RStudio makes this very easy. Simply select a new R Markdown document and select shiny.
 
 Works the same as a typical R Markdown document but can now add chunks that contain shiny applications.
 
@@ -255,8 +255,9 @@ One disadvantage is that you can no longer export static html files for distribu
 
 ## Example
 
-![](figures/R_Markdown_Shiny.png)
-
+```{r, out.width = "850px"}
+knitr::include_graphics("figures/R_Markdown_Shiny.png")
+```
 
 # Cloud computing
 
@@ -264,18 +265,18 @@ One disadvantage is that you can no longer export static html files for distribu
 
 Dealing with large quantities of data often requires extra computational power.
 
-High performance computing options
+High performance computing (HPC) options
 
 * Cloud services (AWS, Nectar)
 * Clusters (Monarch)
 
 ## Clusters
 
-Monarch is Monash's HPC cluster and is available to all staff and students.
+Monarch is Monash's HPC Cluster and is available to all staff and students.
 
 Advantages
 
-* Lots of different machines available.
+* Lots of different servers available.
 * Considerable amount of computing power.
 
 Disadvantages
@@ -290,7 +291,7 @@ Nectar is available to all staff and students at Australian universities. It is 
 Advantages
 
 * Easy to scale.
-* Can host R Studio or Shiny server.
+* Can host RStudio or Shiny server.
 * Just wonderful.
 
 Disadvantages
@@ -312,12 +313,26 @@ So is it possible to create Shiny + R Markdown documents with a HPC back-end?
 Yes - and easily too!
 
 1. Create an Ubuntu instance on Nectar.
-2. Install R Studio Server.
-3. Set up access group with correct permissions.
+2. Download and install RStudio Server.
+3. Set up security group rules.
 4. Log in from your web browser.
+5. (Optional) set up SSL encryption using Nginx/Apache2 server and OpenSSL.
+
+The last step isn't required if using the commercial version of RStudio Server.
 
 # A snake in the grass
 
 ## For any Python users
 
 Python can achieve similar results using Jupyter notebooks and the ipywidgets package.
+
+----
+
+```{r, out.width = "900px"}
+knitr::include_graphics("figures/jupyter.png")
+```
+
+
+# Questions?
+
+## Thanks for listening ᕙ(◍‿◎)ᕗ
