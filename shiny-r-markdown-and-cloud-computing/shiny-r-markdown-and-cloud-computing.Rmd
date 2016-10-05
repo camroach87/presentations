@@ -22,7 +22,10 @@ require(DT)
 
 Shiny is a wrapper for various HTML, JavaScript and CSS functions.
 
-Shiny makes it easy to create attractive web applications.
+Shiny is an R package that is nicely integrated with RStudio.
+
+Shiny makes it easy to create attractive web applications that run your R analyses.
+
 
 ## Can be used for
 
