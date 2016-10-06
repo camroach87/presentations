@@ -1,4 +1,4 @@
-# presentations
+# Presentations
 Various presentations
 
 Presentations are hosted on shinyapps.io. Links are below
