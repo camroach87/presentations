@@ -1,0 +1,61 @@
+Energy integration slides
+========================================================
+author: Cameron Roach
+date: 14 March 2017
+autosize: true
+
+```{r setup, include=FALSE} 
+require(dplyr)
+require(tidyr)
+require(lubridate)
+require(ggplot2)
+require(quantreg)
+
+# Load data
+
+
+# Run model
+
+```
+
+
+Building Level Energy Forecasting
+========================================================
+
+Buildings require energy forecasting to help with
+
+- Manage peak demand.
+- Quantify the impacts of building management changes.
+- Assessing performance.
+
+Dealing with 150+ buildings which require daily forecasts that help facility managers (FMs) with these items.
+
+Quantile Regression
+========================================================
+
+Useful forecasts can be produced using quantile regression.
+
+* It can be used to forecast the entire distribution rather than the conditional mean only. 
+* Uses the pinball loss function,
+
+$$
+L_\tau \left( y, q_\tau \right) =
+\begin{cases}
+  \tau(y-q_\tau) & \text{ for } y \geq q_\tau,\\
+  (1-\tau)(q_\tau-y) & \text{ for } q_\tau > y.
+\end{cases}
+$$
+
+__TODO: Show OLS and Pinball loss functions__
+
+Peak Demand Forecasting
+========================================================
+
+```{r, echo=FALSE}
+
+```
+
+
+Peak Demand Management
+========================================================
+
