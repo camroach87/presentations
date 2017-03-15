@@ -121,15 +121,16 @@ Peak Demand Forecasting
 
 ```{r quantile-plot, fig.width=20, fig.height = 10, fig.align="center"}
 ggplot() +
-  geom_line(data = bldng_df %>% 
-              filter(between(date(ts), p_date_start, p_date_end)),
-            aes(x=ts, y=`kW Power (kW)`), colour = "black") +
   geom_line(data = bldng_pred %>% 
               filter(between(date(ts), p_date_start, p_date_end)) %>% 
               select(b_uid, ts, starts_with("tau")) %>% 
               gather(Quantile, `kW Power (kW)`, starts_with("tau")) %>% 
               mutate(Quantile = as.numeric(str_extract(Quantile, "\\d.\\d+"))),
-            aes(x=ts, y=`kW Power (kW)`, colour = Quantile, group = Quantile)) +
+            aes(x=ts, y=`kW Power (kW)`, colour = Quantile, group = Quantile),
+            alpha = 0.5) +
+  geom_line(data = bldng_df %>% 
+              filter(between(date(ts), p_date_start, p_date_end)),
+            aes(x=ts, y=`kW Power (kW)`), colour = "black") +
   facet_wrap(~b_uid, ncol = 1) +
   xlab("Date") +
   ggtitle("Energy usage for two commercial buildings.") +
