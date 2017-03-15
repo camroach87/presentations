@@ -10,9 +10,13 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE
 )
+
+rm(list=ls())
+
 require(dplyr)
 require(tidyr)
 require(lubridate)
+require(stringr)
 require(ggplot2)
 require(readr)
 require(quantreg)
@@ -35,9 +39,12 @@ for (iB in b_uids) {
     mutate(b_uid = iB,
            ts = dmy_hm(paste(Date, `LOCAL Time`)),
            Period = hour(ts)*4 + minute(ts)/15 + 1,
-           Period = factor(Period, ordered = TRUE, levels = 1:96)) %>% 
+           Period = factor(Period, ordered = FALSE, levels = 1:96),
+           DoW = factor(wday(ts, label = TRUE), ordered = FALSE),
+           Weekend = if_else(DoW %in% c("Sat", "Sun"), TRUE, FALSE)) %>% 
     select(-c(Date, `LOCAL Time`)) %>% 
-    filter(!is.na(`Temperature (degrees Celsius)`)) %>% 
+    filter(!is.na(`Temperature (degrees Celsius)`),
+           Period %in% c(1:24*4)) %>% 
     bind_rows(bldng_df)
 }
 
@@ -45,21 +52,20 @@ for (iB in b_uids) {
 # Fit model
 quantile_sequence <- 1:9/10
 rq_fit <- foreach (iB = b_uids) %dopar% {
-  rq(`kW Power (kW)` ~ poly(`Temperature (degrees Celsius)`, 2) + `Humidity (%)` + Period,
+  rq(#`kW Power (kW)` ~ poly(`Temperature (degrees Celsius)`, 2) + `Humidity (%)` + Period + DoW,
+    `kW Power (kW)` ~ `Temperature (degrees Celsius)` + Period + Weekend,
      tau = quantile_sequence,
      data = filter(bldng_df,
-                   b_uid == iB,
-                   Period %in% c(1:24*4)))
+                   b_uid == iB))
 }
 names(rq_fit) <- b_uids
 
 # Predictions
 bldng_pred <- bldng_df %>% 
-  filter(Period %in% c(1:24*4)) %>% 
   group_by(b_uid) %>% 
   do(data.frame(predict(rq_fit[[.$b_uid[1]]], .),
+                .,
                 check.names = FALSE))
-
 ```
 
 
@@ -79,8 +85,11 @@ Building Level Energy Forecasting
 ========================================================
 
 ```{r energy-plot, fig.width=20, fig.height = 10, fig.align="center"}
+p_date_start <- dmy("1/1/2017")
+p_date_end <- dmy("7/1/2017")
+
 bldng_df %>% 
-  filter(ts >= dmy("1/1/2017")) %>% 
+  filter(between(date(ts), p_date_start, p_date_end)) %>% 
   ggplot(aes(x=ts, y=`kW Power (kW)`)) + 
   geom_line() + 
   facet_wrap(~b_uid, ncol = 1) +
@@ -110,11 +119,26 @@ __TODO: Show OLS and Pinball loss functions__
 Peak Demand Forecasting
 ========================================================
 
-```{r, echo=FALSE}
-
+```{r quantile-plot, fig.width=20, fig.height = 10, fig.align="center"}
+ggplot() +
+  geom_line(data = bldng_df %>% 
+              filter(between(date(ts), p_date_start, p_date_end)),
+            aes(x=ts, y=`kW Power (kW)`), colour = "black") +
+  geom_line(data = bldng_pred %>% 
+              filter(between(date(ts), p_date_start, p_date_end)) %>% 
+              select(b_uid, ts, starts_with("tau")) %>% 
+              gather(Quantile, `kW Power (kW)`, starts_with("tau")) %>% 
+              mutate(Quantile = as.numeric(str_extract(Quantile, "\\d.\\d"))),
+            aes(x=ts, y=`kW Power (kW)`, colour = Quantile, group = Quantile)) +
+  facet_wrap(~b_uid, ncol = 1) +
+  xlab("Date") +
+  ggtitle("Energy usage for two commercial buildings.") +
+  scale_colour_gradient(low = "springgreen3", high = "red")
 ```
 
 
-Peak Demand Management
+Demand Management
 ========================================================
 
+* Providing a full distribution allows FMs to better assess risks and take appropriate actions to prevent peaks being met.
+* Assessing their previous day's performance against a full distribution allows them to determine if their building management practices were adequate and how close they were to optimal performance.
