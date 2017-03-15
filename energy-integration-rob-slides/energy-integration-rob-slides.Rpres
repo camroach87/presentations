@@ -50,7 +50,7 @@ for (iB in b_uids) {
 
 
 # Fit model
-quantile_sequence <- 1:9/10
+quantile_sequence <- 1:99/100
 rq_fit <- foreach (iB = b_uids) %dopar% {
   rq(#`kW Power (kW)` ~ poly(`Temperature (degrees Celsius)`, 2) + `Humidity (%)` + Period + DoW,
     `kW Power (kW)` ~ `Temperature (degrees Celsius)` + Period + Weekend,
@@ -128,7 +128,7 @@ ggplot() +
               filter(between(date(ts), p_date_start, p_date_end)) %>% 
               select(b_uid, ts, starts_with("tau")) %>% 
               gather(Quantile, `kW Power (kW)`, starts_with("tau")) %>% 
-              mutate(Quantile = as.numeric(str_extract(Quantile, "\\d.\\d"))),
+              mutate(Quantile = as.numeric(str_extract(Quantile, "\\d.\\d+"))),
             aes(x=ts, y=`kW Power (kW)`, colour = Quantile, group = Quantile)) +
   facet_wrap(~b_uid, ncol = 1) +
   xlab("Date") +
