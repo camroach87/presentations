@@ -5,16 +5,60 @@ date: 14 March 2017
 autosize: true
 
 ```{r setup, include=FALSE} 
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
 require(dplyr)
 require(tidyr)
 require(lubridate)
 require(ggplot2)
+require(readr)
 require(quantreg)
+require(foreach)
+require(doMC)
+
+# Register cores for parallel processing
+registerDoMC(3)
 
 # Load data
+data_dir <- "./data/"
+b_uids <- c("BID1002_123", "BID1012_255")
+
+bldng_df <- NULL
+for (iB in b_uids) {
+  bldng_df <- read_csv(paste0(data_dir, iB, ".csv"),
+                       col_types = cols(
+                         `LOCAL Time` = "c"
+                       )) %>%
+    mutate(b_uid = iB,
+           ts = dmy_hm(paste(Date, `LOCAL Time`)),
+           Period = hour(ts)*4 + minute(ts)/15 + 1,
+           Period = factor(Period, ordered = TRUE, levels = 1:96)) %>% 
+    select(-c(Date, `LOCAL Time`)) %>% 
+    filter(!is.na(`Temperature (degrees Celsius)`)) %>% 
+    bind_rows(bldng_df)
+}
 
 
-# Run model
+# Fit model
+quantile_sequence <- 1:9/10
+rq_fit <- foreach (iB = b_uids) %dopar% {
+  rq(`kW Power (kW)` ~ poly(`Temperature (degrees Celsius)`, 2) + `Humidity (%)` + Period,
+     tau = quantile_sequence,
+     data = filter(bldng_df,
+                   b_uid == iB,
+                   Period %in% c(1:24*4)))
+}
+names(rq_fit) <- b_uids
+
+# Predictions
+bldng_pred <- bldng_df %>% 
+  filter(Period %in% c(1:24*4)) %>% 
+  group_by(b_uid) %>% 
+  do(data.frame(predict(rq_fit[[.$b_uid[1]]], .),
+                check.names = FALSE))
 
 ```
 
@@ -29,6 +73,21 @@ Buildings require energy forecasting to help with
 - Assessing performance.
 
 Dealing with 150+ buildings which require daily forecasts that help facility managers (FMs) with these items.
+
+
+Building Level Energy Forecasting
+========================================================
+
+```{r energy-plot, fig.width=20, fig.height = 10, fig.align="center"}
+bldng_df %>% 
+  filter(ts >= dmy("1/1/2017")) %>% 
+  ggplot(aes(x=ts, y=`kW Power (kW)`)) + 
+  geom_line() + 
+  facet_wrap(~b_uid, ncol = 1) +
+  xlab("Date") +
+  ggtitle("Energy usage for two commercial buildings.")
+```
+
 
 Quantile Regression
 ========================================================
