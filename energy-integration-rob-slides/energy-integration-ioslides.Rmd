@@ -164,9 +164,11 @@ bldng_df %>%
          period = as.numeric(period)) %>% 
   ggplot(aes(x = `Temperature (degrees Celsius)`, y = `Power (kW)`,
              colour = period, group = period)) +
-  geom_smooth(method = "lm", formula = y ~ ns(x, df = 2), se = FALSE) +
+  geom_smooth(method = "lm", formula = y ~ ns(x, df = 2), se = FALSE, alpha = 0.3) +
   facet_wrap(~b_uid) +
-  scale_colour_gradient2(low = "springgreen3", mid = "red", high = "springgreen3", midpoint = 48)
+  scale_colour_gradient2(low = "red", mid = "springgreen3", high = "blue",
+                         midpoint = 49) +
+  labs(colour = "Period")
 ```
 
 
