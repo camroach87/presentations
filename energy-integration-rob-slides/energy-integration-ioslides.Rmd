@@ -10,7 +10,8 @@ output: ioslides_presentation
 knitr::opts_chunk$set(
 	echo = FALSE,
 	message = FALSE,
-	warning = FALSE
+	warning = FALSE,
+	dev = "png"
 )
 
 rm(list=ls())
@@ -96,16 +97,16 @@ if (file.exists(cache_file)) {
 
 ## Managing Commercial Buildings
 
-Buildings require energy forecasting to help with
+Buildings require energy forecasting to help
 
 - Manage peak demand.
 - Quantify the impacts of building management changes.
-- Assessing performance and energy efficiency.
+- Assess performance and energy efficiency.
 
-Dealing with 150+ buildings which include shopping centres, hospitals and office blocks. Each require daily forecasts to inform facility managers (FMs).
+Buildings Alive work with 150+ commercial buildings which include supermarkets, hospitals and office blocks. Each require daily forecasts to inform facility managers (FMs).
 
 ```{r ba-logo, fig.align="right", out.height="50%"}
-include_graphics("fig/ba-logo.pdf")
+include_graphics("./fig/ba-logo.pdf")
 ```
 
 ## Building Level Energy Usage
@@ -125,11 +126,9 @@ bldng_df %>%
 
 ## Quantile Regression
 
+Useful forecasts can be produced using quantile regression. It can be used to forecast the entire distribution rather than the conditional mean only. 
 
-Useful forecasts can be produced using quantile regression.
-
-* It can be used to forecast the entire distribution rather than the conditional mean only. 
-* Uses the pinball loss function,
+Uses the pinball loss function,
 
 $$
 L_\tau \left( y, q_\tau \right) =
@@ -142,7 +141,8 @@ $$
 ```{r qr-ols-loss-functions, out.width="40%", fig.cap="Ordinary least squares and pinball loss functions.", fig.align="center", fig.show="hold"}
 ggplot(data.frame(x=c(-1, 1)), aes(x)) +  
   stat_function(fun = function(x) {x^2}) + 
-  xlab("x") + 
+  #xlab("x") + 
+  xlab("") +
   ylab("L") + 
   ggtitle("OLS loss function") 
 
@@ -151,7 +151,8 @@ ggplot(data.frame(x=c(-1, 1)), aes(x)) +
                 fun = function(x) {(1-0.8)*-x}) + 
   stat_function(xlim = c(0, 1), 
                 fun = function(x) {0.8*x}) + 
-  xlab(expression(q[tau])) + 
+  #xlab(expression(q[tau])) + 
+  xlab("") +
   ylab(expression(L[tau] (y, q[tau]))) + 
   ggtitle("Pinball loss function") 
 ``` 
@@ -176,7 +177,8 @@ ggplot() +
 ```
 
 
-## Demand Management
+## Performance
 
-* Providing a full distribution allows FMs to better assess risks and take appropriate actions to prevent peaks being met.
-* Assessing their previous day's performance against a full distribution allows them to determine if their building management practices were adequate and how close they were to optimal performance.
+* Forecasting a full distribution allows FMs to better assess risks and take appropriate actions.
+* Allows FMs to know the severity __and probability__ of demand peaks.
+* Can immediately assess if a building's performance was good compared to historical performance under similar conditions.
