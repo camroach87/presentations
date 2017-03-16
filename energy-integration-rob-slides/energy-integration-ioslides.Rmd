@@ -104,7 +104,7 @@ Buildings require energy forecasting to help with
 
 Dealing with 150+ buildings which include shopping centres, hospitals and office blocks. Each require daily forecasts to inform facility managers (FMs).
 
-```{r ba-logo, fig.align="right", out.height="50%", fig.pos="b"}
+```{r ba-logo, fig.align="right", out.height="50%"}
 include_graphics("fig/ba-logo.pdf")
 ```
 
