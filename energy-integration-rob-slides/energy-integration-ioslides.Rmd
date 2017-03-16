@@ -26,8 +26,10 @@ require(quantreg)
 require(foreach)
 require(doMC)
 require(knitr)
+require(splines)
 
 cache_file <- "./cache/slide_session.RData"
+data_dir <- "./data/"
 
 if (file.exists(cache_file)) {
   load(cache_file)
@@ -36,7 +38,6 @@ if (file.exists(cache_file)) {
   registerDoMC(3)
   
   # Load data
-  data_dir <- "./data/"
   b_uids <- c("BID1002", "BID1012")
   
   bldng_df <- NULL
@@ -45,11 +46,13 @@ if (file.exists(cache_file)) {
                          col_types = cols(
                            `LOCAL Time` = "c"
                          )) %>%
+      rename(`Power (kW)` = `kW Power (kW)`) %>% 
       mutate(b_uid = iB,
              ts = dmy_hm(paste(Date, `LOCAL Time`)),
-             Period = factor(hour(ts)*4 + minute(ts)/15 + 1),
-             DoW = factor(wday(ts, label = TRUE), ordered = FALSE),
-             Weekend = if_else(DoW %in% c("Sat", "Sun"), TRUE, FALSE)) %>% 
+             date = date(ts),
+             period = factor(hour(ts)*4 + minute(ts)/15 + 1),
+             wday = factor(wday(ts, label = TRUE), ordered = FALSE),
+             weekend = if_else(wday %in% c("Sat", "Sun"), TRUE, FALSE)) %>% 
       filter(!is.na(`Temperature (degrees Celsius)`)) %>% 
       # Add lagged summary statistics
       group_by(Date) %>% 
@@ -65,15 +68,43 @@ if (file.exists(cache_file)) {
   
   # Fit working days only
   bldng_df <- bldng_df %>% 
-    filter(Weekend == FALSE)
+    filter(weekend == FALSE)
+  
+  # Filter outliers (public holidays)
+  # bldng_df %>%
+  #   mutate(date = date(ts), year = year(ts)) %>%
+  #   group_by(b_uid, year, date) %>%
+  #   summarise(kW = mean(`Power (kW)`, na.rm=TRUE)) %>%
+  #   ggplot(aes(x= factor(year), y=kW)) +
+  #   geom_boxplot() +
+  #   facet_wrap(~b_uid)
+  
+  outlier_days <- bldng_df %>% 
+    mutate(date = date(ts), year = year(ts)) %>% 
+    group_by(b_uid, year, date) %>% 
+    summarise(kW = mean(`Power (kW)`, na.rm=TRUE)) %>% 
+    group_by(b_uid, year) %>% 
+    mutate(q1 = quantile(kW, 0.25),
+           q2 = quantile(kW, 0.5),
+           q3 = quantile(kW, 0.75),
+           iqr = q3 - q1,
+           outlier_low = q1 - 1.5 * iqr,
+           outlier = if_else(kW < outlier_low, TRUE, FALSE)) %>% 
+    ungroup()
+  
+  bldng_df <- outlier_days %>% 
+    select(b_uid, date, outlier) %>% 
+    inner_join(bldng_df) %>% 
+    filter(outlier != TRUE)
+  
+  
   
   # Fit model
   #quantile_sequence <- 10:90/100
   quantile_sequence <- 1:9/10
   rq_fit <- foreach (iB = b_uids) %dopar% {
-    rq(#`kW Power (kW)` ~ poly(`Temperature (degrees Celsius)`, 2) + `Humidity (%)` + Period + DoW,
-      `kW Power (kW)` ~ `Temperature (degrees Celsius)` + Period + 
-        mean_day_temp_lag1 + mean_day_temp_lag2,
+    rq(#`Power (kW)` ~ poly(`Temperature (degrees Celsius)`, 2) + `Humidity (%)` + period + mean_day_temp_lag1 + mean_day_temp_lag2,
+      `Power (kW)` ~ ns(`Temperature (degrees Celsius)`, 2) + period + mean_day_temp_lag1 + mean_day_temp_lag2,
       tau = quantile_sequence,
       data = filter(bldng_df,
                     b_uid == iB))
@@ -97,36 +128,51 @@ if (file.exists(cache_file)) {
 
 ## Managing Commercial Buildings
 
-Buildings require energy forecasting to help
+Commercial buildings require energy forecasting to help:
 
 - Manage peak demand.
 - Quantify the impacts of building management changes.
 - Assess performance and energy efficiency.
 
-Buildings Alive work with 150+ commercial buildings which include supermarkets, hospitals and office blocks. Each require daily forecasts to inform facility managers (FMs).
+Buildings Alive works with 150+ commercial buildings which include supermarkets, hospitals and office blocks. Each require daily forecasts to inform facilities managers (FMs).
 
 ```{r ba-logo, fig.align="right", out.height="50%"}
 include_graphics("./fig/ba-logo.pdf")
 ```
 
-## Building Level Energy Usage
+## Building Level Data
 
 ```{r energy-plot, fig.align="center", fig.cap="Energy usage for two commercial buildings."}
-p_date_start <- dmy("9/1/2017")
-p_date_end <- dmy("13/1/2017")
+p_date_start <- dmy("16/1/2017")
+p_date_end <- dmy("20/1/2017")
 
 bldng_df %>% 
   filter(between(date(ts), p_date_start, p_date_end)) %>% 
-  ggplot(aes(x=ts, y=`kW Power (kW)`)) + 
+  ggplot(aes(x=ts, y=`Power (kW)`)) + 
   geom_line() + 
   facet_wrap(~b_uid, ncol = 1) +
   xlab("Date")
 ```
 
 
+## Building Level Data
+
+```{r weather-energy-plot, fig.align="center", fig.cap="Natural cubic splines for each period of the day (df = 2)."}
+bldng_df %>% 
+  mutate(year = year(ts),
+         period = as.numeric(period)) %>% 
+  ggplot(aes(x = `Temperature (degrees Celsius)`, y = `Power (kW)`,
+             colour = period, group = period)) +
+  geom_smooth(method = "lm", formula = y ~ ns(x, df = 2), se = FALSE) +
+  facet_wrap(~b_uid) +
+  scale_colour_gradient2(low = "springgreen3", mid = "red", high = "springgreen3", midpoint = 48)
+```
+
+
+
 ## Quantile Regression
 
-Useful forecasts can be produced using quantile regression. It can be used to forecast the entire distribution rather than the conditional mean only. 
+Useful forecasts can be produced using quantile regression. Instead of only forecasting the conditional mean the entire distribution is forecast.
 
 Uses the pinball loss function,
 
@@ -164,20 +210,20 @@ ggplot() +
   geom_line(data = bldng_pred %>% 
               filter(between(date(ts), p_date_start, p_date_end)) %>% 
               select(b_uid, ts, starts_with("tau")) %>% 
-              gather(Quantile, `kW Power (kW)`, starts_with("tau")) %>% 
+              gather(Quantile, `Power (kW)`, starts_with("tau")) %>% 
               mutate(Quantile = as.numeric(str_extract(Quantile, "\\d.\\d+"))),
-            aes(x=ts, y=`kW Power (kW)`, colour = Quantile, group = Quantile),
+            aes(x=ts, y=`Power (kW)`, colour = Quantile, group = Quantile),
             alpha = 0.5) +
   geom_line(data = bldng_df %>% 
               filter(between(date(ts), p_date_start, p_date_end)),
-            aes(x=ts, y=`kW Power (kW)`), colour = "black") +
+            aes(x=ts, y=`Power (kW)`), colour = "black") +
   facet_wrap(~b_uid, ncol = 1) +
   xlab("Date") +
   scale_colour_gradient(low = "springgreen3", high = "red")
 ```
 
 
-## Performance
+## Assessing performance
 
 * Forecasting a full distribution allows FMs to better assess risks and take appropriate actions.
 * Allows FMs to know the severity __and probability__ of demand peaks.
