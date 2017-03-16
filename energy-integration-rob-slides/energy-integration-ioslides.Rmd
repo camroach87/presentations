@@ -101,21 +101,39 @@ if (file.exists(cache_file)) {
   
   
   # Fit model
-  #quantile_sequence <- 10:90/100
+  #quantile_sequence <- 5:95/100
   quantile_sequence <- 1:9/10
-  rq_fit <- foreach (iB = b_uids) %dopar% {
-    rq(#`Power (kW)` ~ poly(`Temperature (degrees Celsius)`, 2) + `Humidity (%)` + period + mean_day_temp_lag1 + mean_day_temp_lag2,
-      `Power (kW)` ~ ns(`Temperature (degrees Celsius)`, 2) + period + mean_day_temp_lag1 + mean_day_temp_lag2,
+  
+  # rq_fit <- foreach (iB = b_uids) %dopar% {
+  #   rq(#`Power (kW)` ~ poly(`Temperature (degrees Celsius)`, 2) + `Humidity (%)` + period + mean_day_temp_lag1 + mean_day_temp_lag2,
+  #     `Power (kW)` ~ ns(`Temperature (degrees Celsius)`, 2) + period + mean_day_temp_lag1 + mean_day_temp_lag2,
+  #     tau = quantile_sequence,
+  #     data = filter(bldng_df,
+  #                   b_uid == iB))
+  # }
+  
+  rq_fit <- foreach(iB = b_uids) %dopar% {
+    rq_tmp <- list()
+    for(iP in 1:96) {
+      rq_tmp[[iP]] <- rq(`Power (kW)` ~ ns(`Temperature (degrees Celsius)`, 2) + mean_day_temp_lag1 + mean_day_temp_lag2,
       tau = quantile_sequence,
       data = filter(bldng_df,
-                    b_uid == iB))
+                    b_uid == iB,
+                    period %in% c(iP + -2:2)))
+    }
+    rq_tmp
   }
   names(rq_fit) <- b_uids
   
   # Predictions
+  # bldng_pred <- bldng_df %>% 
+  #   group_by(b_uid) %>% 
+  #   do(data.frame(predict(rq_fit[[.$b_uid[1]]], .),
+  #                 .,
+  #                 check.names = FALSE))
   bldng_pred <- bldng_df %>% 
-    group_by(b_uid) %>% 
-    do(data.frame(predict(rq_fit[[.$b_uid[1]]], .),
+    group_by(b_uid, period) %>% 
+    do(data.frame(predict(rq_fit[[.$b_uid[1]]][[.$period[1]]], .),
                   .,
                   check.names = FALSE))
   
@@ -161,7 +179,8 @@ bldng_df %>%
 ```{r weather-energy-plot, fig.align="center", fig.cap="Natural cubic splines for each period of the day (df = 2)."}
 bldng_df %>% 
   mutate(year = year(ts),
-         period = as.numeric(period)) %>% 
+         period = as.numeric(period)) %>%
+  filter(period %in% c(1:24*4)) %>% 
   ggplot(aes(x = `Temperature (degrees Celsius)`, y = `Power (kW)`,
              colour = period, group = period)) +
   geom_smooth(method = "lm", formula = y ~ ns(x, df = 2), se = FALSE, alpha = 0.3) +
@@ -216,7 +235,7 @@ ggplot() +
               gather(Quantile, `Power (kW)`, starts_with("tau")) %>% 
               mutate(Quantile = as.numeric(str_extract(Quantile, "\\d.\\d+"))),
             aes(x=ts, y=`Power (kW)`, colour = Quantile, group = Quantile),
-            alpha = 0.5) +
+            alpha = 0.8) +
   geom_line(data = bldng_df %>% 
               filter(between(date(ts), p_date_start, p_date_end)),
             aes(x=ts, y=`Power (kW)`), colour = "black") +
