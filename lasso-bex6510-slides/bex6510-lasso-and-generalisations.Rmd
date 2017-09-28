@@ -27,9 +27,7 @@ Allows for variable selection.
 
 ## Motivation
 
-Given $N$ samples $\left\{ (\mathbf{x}_i, y_i) \right\}_{i=1}^N$ where $\mathbf{x}_i = (x_{i1}, x_{i2}, \ldots, x_{ip})$ we wish to approximate the response $y_i \in \mathbb{R}$.
-
-This can be done using a standard OLS approach, but there are drawbacks:
+We are given $N$ samples $\left\{ (\mathbf{x}_i, y_i) \right\}_{i=1}^N$ where $\mathbf{x}_i = (x_{i1}, x_{i2}, \ldots, x_{ip})$ and all $x_{ij}, y_i \in \mathbb{R}$. We wish to approximate the response $y_i$. This can be done using a standard OLS approach, but there are drawbacks:
 
 * _Prediction accuracy_: low bias but large variance. Bias-variance trade off can improve prediction accuracy.
 * _Interpretation_: difficult if $p$ is large.
@@ -104,6 +102,10 @@ The estimates of $\boldsymbol{\beta}$ given by ridge regression and the lasso ha
 ----
 
 ### Bias-variance tradeoff
+
+## Computation
+
+The lasso is a quadratic programming problem.
 
 ## Generalisations
 
