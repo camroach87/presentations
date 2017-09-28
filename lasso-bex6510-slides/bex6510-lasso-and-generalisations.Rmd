@@ -3,39 +3,41 @@ title: 'BEX6510: Lasso and generalisations'
 author: "Cameron Roach"
 date: '`r format(Sys.time(), "%d %B, %Y")`'
 output:
-  ioslides_presentation: default
+  ioslides_presentation:
+    widescreen: false
+    smaller: true
   beamer_presentation:
     toc: yes
   slidy_presentation: default
 bibliography: library.bib
+nocite: | 
+  @Friedman2001-vq, @Hastie2015-gy, @James2014-xw
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 ## Introduction
 
-Introduced by @Tibshirani1996-fg.
+Introduced by @Tibshirani1996-fg (21,216 citations!).
 
 Allows for variable selection.
-
-Good overviews in @James2014-xw, @Hastie2015-gy and @Friedman2001-vq.
 
 
 ## Motivation
 
 Given $N$ samples $\left\{ (\mathbf{x}_i, y_i) \right\}_{i=1}^N$ where $\mathbf{x}_i = (x_{i1}, x_{i2}, \ldots, x_{ip})$ we wish to approximate the response $y_i \in \mathbb{R}$.
 
-This can be done in using a standard OLS approach, but there are drawbacks:
+This can be done using a standard OLS approach, but there are drawbacks:
 
-* _Prediction accuracy_: low bias but large variance. Bias-variance tradeoff can improve prediction accuracy.
+* _Prediction accuracy_: low bias but large variance. Bias-variance trade off can improve prediction accuracy.
 * _Interpretation_: difficult if $p$ is large.
 
-## The lasso
 
-The lasso combines the least-squares loss with an $L_1$ constraint,
+## Ridge regression
+
+Ridge regression predates the lasso. Combines the the least-squares loss with an $L_2$ penalty.
 
 $$
 \min_{\beta_0, \boldsymbol{\beta}}  \left\{ 
@@ -44,42 +46,77 @@ $$
 \right\}.
 $$
 
-This can also be expressed in the Lagrangian form,
+This can also be expressed in the matrix form,
 
 $$
 \min_{\beta_0, \boldsymbol{\beta}}  \left\{ 
-  \frac{1}{2N} \| \mathbf{y} - \mathbf{X}\boldsymbol{\beta} \|^2_2 + \lambda \| \mathbf{\beta} \|_1
+  \frac{1}{2N} \| \mathbf{y} - \mathbf{X}\boldsymbol{\beta} \|^2_2 + \lambda \| \boldsymbol{\beta} \|_2
 \right\}.
 $$
+
+Differentiating with respect to $\boldsymbol{\beta}$ and setting equal to zero yields the solution,
+
+$$
+\hat{\boldsymbol{\beta}} = (\mathbf{X}'\mathbf{X} + \lambda \mathbf{I})^{-1} \mathbf{X}'\mathbf{y}.
+$$
+
+
+
+## The lasso
+
+The lasso is similar to ridge regression, but uses an $L_1$ penalty instead of $L_2$.
+
+$$
+\min_{\beta_0, \boldsymbol{\beta}}  \left\{ 
+  \frac{1}{2N} \sum^N_{i=1} \left(y_i -\beta_0 - \sum^p_{j=1} \beta_j x_{ij} \right)^2 +
+  \lambda \sum^p_{j=1} \left| \beta_j \right|
+\right\}.
+$$
+
+This can also be expressed in the matrix form,
+
+$$
+\min_{\beta_0, \boldsymbol{\beta}}  \left\{ 
+  \frac{1}{2N} \| \mathbf{y} - \mathbf{X}\boldsymbol{\beta} \|^2_2 + \lambda \| \boldsymbol{\beta} \|_1
+\right\}.
+$$
+
+Lasso is a quadratic programming problem.
 
 The factor $\frac{1}{2N}$ can be omitted, but does make $\lambda$ comparable for different sample sizes [@Hastie2015-gy].
 
-## Ridge regression
-
-Ridge regression predates the lasso and usese an $L2$ penalty instead of $L1$.
-
-$$
-\min_{\beta_0, \boldsymbol{\beta}}  \left\{ 
-  \frac{1}{2N} \| \mathbf{y} - \mathbf{X}\boldsymbol{\beta} \|^2_2 + \lambda \| \mathbf{\beta} \|_2
-\right\}.
-$$
-
-Interesting to compare the behaviour of ridge and lasso penalties on coefficients.
-
 ## Properties
 
-* Lasso handles sparsity well (only a few non-zero columns).
+The estimates of $\boldsymbol{\beta}$ given by ridge regression and the lasso have different properties despite their similarity.
 
-__TODO: insert picture of parameter solution space and constraint regions.__
+* Ridge regression pushes coefficients towards zero, whereas lasso can make certain coefficients exactly equal to zero.
+* Lasso handles sparsity well (only a few non-zero columns).
+* Lasso does not handle highly correlated predictors well.
+
+----
+
+<div class="centered">
+
+![Lasso (left) and ridge regression (right) parameter estimation. Solid blue represents constraints regions and red lines show the contours of the RSS function. The OLS solution is given by $\hat{\beta}$. Image: @Friedman2001-vq.](figures/lasso-ridge-estimation.png)
+
+</div>
+
+----
+
+### Bias-variance tradeoff
 
 ## Generalisations
 
 ### Elastic net
 
-<!-- The lasso does not handle highly correlated variables well - unpredictable results in coefficient paths. -->
+The lasso does not handle highly correlated variables well - unpredictable results in coefficient paths.
 
 ### Group lasso
 
 ### Fused lasso
 
-## References {-}
+
+
+## References and further reading {-}
+
+
