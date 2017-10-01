@@ -95,7 +95,7 @@ The estimates of $\boldsymbol{\beta}$ given by ridge regression and the lasso ha
 
 <div class="centered">
 
-![Lasso (left) and ridge regression (right) parameter estimation. Solid blue represents constraints regions and red lines show the contours of the RSS function. The OLS solution is given by $\hat{\beta}$. Image: @Friedman2001-vq.](figures/lasso-ridge-estimation.png)
+![Lasso (left) and ridge regression (right) parameter estimation. Solid blue represents constraints regions and red lines show the contours of the RSS function. The OLS solution is given by $\hat{\beta}$. Moving away from the OLS solution results in increasing RSS. The point at which the RSS function contour first touches the contraint region is the lasso/ridge solution. Image: @Friedman2001-vq.](figures/lasso-ridge-estimation.png)
 
 </div>
 
