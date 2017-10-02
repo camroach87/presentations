@@ -4,14 +4,14 @@ author: "Cameron Roach"
 date: '`r format(Sys.time(), "%d %B, %Y")`'
 output:
   ioslides_presentation:
-    widescreen: false
-    smaller: true
+    smaller: yes
+    widescreen: yes
   beamer_presentation:
     toc: yes
   slidy_presentation: default
-bibliography: library.bib
-nocite: | 
+nocite: |
   @Friedman2001-vq, @Hastie2015-gy, @James2014-xw
+bibliography: library.bib
 ---
 
 ```{r setup, include=FALSE}
@@ -23,6 +23,8 @@ knitr::opts_chunk$set(echo = TRUE)
 Introduced by @Tibshirani1996-fg (21,216 citations!).
 
 Allows for variable selection.
+
+See section 2.10 of Statistical Learning with Sparsity.
 
 
 ## Motivation
@@ -83,6 +85,16 @@ Lasso is a quadratic programming problem.
 
 The factor $\frac{1}{2N}$ can be omitted, but does make $\lambda$ comparable for different sample sizes [@Hastie2015-gy].
 
+----
+
+Necessary and sufficient condition for solution takes the form,
+
+$$
+-\frac{1}{N}\left< \mathbf{x}_j, \mathbf{y} - \mathbf{X} \boldsymbol{\beta}\right> + \lambda s_j = 0, \quad j=1,\ldots,p,
+$$
+
+where 
+
 ## Properties
 
 The estimates of $\boldsymbol{\beta}$ given by ridge regression and the lasso have different properties despite their similarity.
@@ -93,15 +105,27 @@ The estimates of $\boldsymbol{\beta}$ given by ridge regression and the lasso ha
 
 ----
 
+### Parameter estimation
+
 <div class="centered">
-
 ![Lasso (left) and ridge regression (right) parameter estimation. Solid blue represents constraints regions and red lines show the contours of the RSS function. The OLS solution is given by $\hat{\beta}$. Moving away from the OLS solution results in increasing RSS. The point at which the RSS function contour first touches the constraint region is the lasso/ridge solution. Image: @Friedman2001-vq.](figures/lasso-ridge-estimation.png)
+</div>
 
+----
+
+### Coefficient paths
+
+<div class="centered">
+![Coefficient paths of the lasso (left) and ridge regression (right). Image: @James2014-xw.](figures/coefficients-path.png)
 </div>
 
 ----
 
 ### Bias-variance tradeoff
+
+<div class="centered">
+![Squared bias (black), variance (green) and test MSE (pink) of lasso ona a simulated data set. Image: @James2014-xw.](figures/bias-variance-lasso.png)
+</div>
 
 ## Computation
 
