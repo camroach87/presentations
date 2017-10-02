@@ -20,11 +20,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introduction
 
-Introduced by @Tibshirani1996-fg (21,216 citations!).
-
-Allows for variable selection.
-
-See section 2.10 of Statistical Learning with Sparsity.
+* Introduced by @Tibshirani1996-fg (21,216 citations!).
+* Allows for automatic variable selection.
+* Optimisation problem is convex and can be solved efficiently.
 
 
 ## Motivation
@@ -93,7 +91,7 @@ $$
 -\frac{1}{N}\left< \mathbf{x}_j, \mathbf{y} - \mathbf{X} \boldsymbol{\beta}\right> + \lambda s_j = 0, \quad j=1,\ldots,p,
 $$
 
-where 
+where $s_j$
 
 ## Properties
 
