@@ -15,7 +15,11 @@ bibliography: library.bib
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
 ```
 
 # The lasso
@@ -224,11 +228,69 @@ $$
 
 where $\lambda_1, \lambda_2 \geq 0$ are the regularization weights.
 
+The $\lambda_1$ penalty functions as the $\ell_1$ penalty.
+
+The $lambda_2$ penalty encourages neighbouring coefficients to be similar.
+
 # Fun with R!
 
 ## A quick example
 
-A quick example using `R`'s `caret` and `glmnet` packages.
+A quick example using `R`'s `caret` and `glmnet` packages. Can use `glmnet` directly, but `caret` provides extra functionality including
 
+* a consistent interface between many packages,
+* cross-validation, and
+* grid search for parameter tuning.
+
+```{r caret-glmnet}
+require(caret)
+require(ISLR)
+
+Hitters <- na.omit(Hitters)
+
+hitters_train <- train(Salary~.,
+                       data = Hitters,
+                       method = "glmnet",
+                       metric = "RMSE",
+                       tuneGrid = expand.grid(alpha = 1,
+                                              lambda = 10^seq(2,-2,length=25)),
+                       trControl = trainControl(method = "cv",
+                                                number = 5))
+```
+
+----
+
+### Hitters dataset
+
+```{r hitters-data, echo=FALSE}
+require(knitr)
+require(kableExtra)
+
+kable(Hitters, "html") %>%
+  kable_styling() %>%
+  scroll_box(width = "1000px", height = "500px")
+```
+
+----
+
+```{r cv-plot, fig.align='center'}
+require(ggplot2)
+
+ggplot(hitters_train$results, aes(x = lambda, y = RMSE)) + 
+  geom_line() +
+  labs(title = "RMSE of lasso regression using 5-fold cross validation.")
+```
+
+----
+
+```{r glm-best-tune}
+hitters_train$bestTune
+```
+
+----
+
+```{r glm-coef}
+coef(hitters_train$finalModel, s = hitters_train$bestTune$lambda)
+```
 
 ## References and further reading {-}
