@@ -18,6 +18,8 @@ bibliography: library.bib
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# The lasso
+
 ## Introduction
 
 * Introduced by @Tibshirani1996-fg (21,216 citations!).
@@ -137,9 +139,9 @@ The estimates of $\boldsymbol{\beta}$ given by ridge regression and the lasso ha
 
 The lasso is a quadratic programming problem.
 
-## Generalisations
+# Generalisations of the lasso
 
-### Elastic net
+## Elastic net
 
 The lasso does not handle highly correlated variables well.
 
@@ -166,25 +168,65 @@ Again, covariates can be centered to remove the intercept $\beta_0$ which may th
 ![Comparison of elastic-net constraints (left) and lasso (right) in $\mathbb{R}^3$. Curved contours encourage strongly correlated variables to share coefficients. Image: @Hastie2015-gy.](figures/elastic-net-constraint.png)
 </div>
 
-----
+## Group lasso
 
-### Group lasso
+Sometimes covariates have a group structure and it is preferable to have all coefficients within a group shrunk to zero simultaneously.
+
+Let $Z_j \in \mathbb{R}^{p_j}$ be the covariates in group $j \in 1,\ldots,J$. We wish to predict $Y \in \mathbb{R}$ based on the $Z_j$
+
+$$
+\mathbb{E}(Y|Z) = \theta_0 + \sum_{j=1}^J Z_j' \theta_j,
+$$
+
+where $\theta_j \in \mathbb{R}^{p_j}$ is a group of regression coefficients.
+
+Given $N$ samples $\left\{ y_i, z_{i1}, \ldots, z_{iJ} \right\}_{i=1}^n$ we wish to solve the convex problem
+
+$$
+\min_{\theta_0 \in \mathbb{R}, \theta_j \in \mathbb{R}^{p_j}}
+\left\{
+  \frac{1}{2} \sum_{i=1}^n \left( y_i - \theta_0 - \sum_{j=1}^J z_{ij}'\theta_j \right)^2 + \lambda \sum_{j=1}^J \| \theta_j\|_2
+\right\}.
+$$
 
 ----
 
 <div class="centered">
-![Comparison of group lasso constraints (left) and lasso (right) in $\mathbb{R}^3$. Curved contours encourage strongly correlated variables to share coefficients. Image: @Hastie2015-gy.](figures/group-lasso-constraint.png)
+![Comparison of group lasso constraints (left) and lasso (right) in $\mathbb{R}^3$. In the group lasso case there are two groups $\theta_1 = (\beta_1, \beta_2)$ and $\theta_2 = \beta_3$. The pointy bit at the top is where $\theta_1$ (and by extension $\beta_1$ and $\beta_2$) will be set to zero. Image: @Hastie2015-gy.](figures/group-lasso-constraint.png)
 </div>
 
 ----
+### Sparsity with group lasso
 
-### Fused lasso
+__TODO__
+
+## Fused lasso
 
 <div class="centered">
 ![Fused lasso example. Image: @Hastie2015-gy.](figures/fused-lasso-example.png)
 </div>
 
-## Fun with R!
+----
+
+If we are dealing with data that we expect to be piecewise-constant we may wish to to incorporate smoothing.
+
+The _fused lasso_ exploits this structure. 
+Given $N$ samples (and coefficients) we solve the optimization problem
+
+$$
+\min_{\theta \in \mathbb{R}^N}
+\left\{
+  \frac{1}{2} \sum_{i=1}^N (y_i - \theta_i)^2 
+  + \lambda_1 \sum_{i=1}^N | \theta_i|
+  + \lambda_2 \sum_{i=2}^N | \theta_i - \theta_{i-1}|
+\right\}
+$$
+
+where $\lambda_1, \lambda_2 \geq 0$ are the regularization weights.
+
+# Fun with R!
+
+## A quick example
 
 A quick example using `R`'s `caret` and `glmnet` packages.
 
