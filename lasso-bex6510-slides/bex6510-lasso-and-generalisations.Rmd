@@ -40,6 +40,7 @@ We are given $N$ samples $\left\{ (\mathbf{x}_i, y_i) \right\}_{i=1}^N$ where $\
 * _Prediction accuracy_: low bias but large variance. Bias-variance trade off can improve prediction accuracy.
 * _Interpretation_: difficult if $p$ is large.
 
+The lasso addresses these two issues.
 
 ## Ridge regression
 
@@ -227,9 +228,19 @@ There are some generalisations of the lasso (e.g. fused lasso) which violate thi
 
 ## Bounds on lasso $\ell_2$-error
 
+See printout.
+
+<!-- #### Theorem -->
+
+<!-- Suppose that the model matrix $\mathbf{X}$ satisifes the restricted eigenvalue bound for $\gamma > 0$ and constraint set $\mathcal{C}$ -->
+
+<!-- $$ -->
+<!-- \frac{\frac{1}{N} \nu \mathbf{X}'\mathbf{X} \nu}{\| \nu \|_2^2} \geq \gamma \text{ for all nonzero} -->
+<!-- $$ -->
 
 ## Variable selection consistency
 
+See printout.
 
 
 # Generalisations of the lasso
@@ -372,7 +383,7 @@ hitters_train <- train(Salary~.,
                        method = "glmnet",
                        metric = "RMSE",
                        tuneGrid = expand.grid(alpha = 1,
-                                              lambda = 10^seq(2,-2,length=25)),
+                                              lambda = 10^seq(1,-2,length=25)),
                        trControl = trainControl(method = "cv",
                                                 number = 5))
 ```
