@@ -59,7 +59,7 @@ This can also be expressed in matrix form
 
 $$
 \min_{\boldsymbol{\beta}}  \left\{
-  \frac{1}{2N} \| \mathbf{y} - \mathbf{X}\boldsymbol{\beta} \|^2_2 + \lambda \| \boldsymbol{\beta} \|_2
+  \frac{1}{2N} \| \mathbf{y} - \mathbf{X}\boldsymbol{\beta} \|^2_2 + \lambda \| \boldsymbol{\beta} \|_2^2
 \right\}.
 $$
 
@@ -228,7 +228,7 @@ There are some generalisations of the lasso (e.g. fused lasso) which violate thi
 
 ## Bounds on lasso $\ell_2$-error
 
-See printout.
+See Theorem 11.1 @Hastie2015-gy.
 
 <!-- #### Theorem -->
 
@@ -240,8 +240,7 @@ See printout.
 
 ## Variable selection consistency
 
-See printout.
-
+See Theorem 11.3 @Hastie2015-gy.
 
 # Generalisations of the lasso
 
@@ -371,6 +370,8 @@ A quick example using `R`'s `caret` and `glmnet` packages. Can use `glmnet` dire
 * a consistent interface between many packages,
 * cross-validation, and
 * grid search for parameter tuning.
+
+How do we coose $\lambda$? Cross-validation!
 
 ```{r caret-glmnet}
 require(caret)
