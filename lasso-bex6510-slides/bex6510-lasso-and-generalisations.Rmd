@@ -140,6 +140,31 @@ The estimates of $\boldsymbol{\beta}$ given by ridge regression and the lasso ha
 ![Squared bias (black), variance (green) and test MSE (pink) of lasso ona a simulated data set. Image: @James2014-xw.](figures/bias-variance-lasso.png)
 </div>
 
+## Some theory
+
+### Bounds on lasso $\ell_2$-error
+
+Can establish a bound on the $\ell_2$-norm loss between the lasso solution $\hat{\beta}$ and the true regression vector $\beta^*$. See Theorem 11.1 @Hastie2015-gy.
+
+<!-- #### Theorem -->
+
+<!-- Suppose that the model matrix $\mathbf{X}$ satisifes the restricted eigenvalue bound for $\gamma > 0$ and constraint set $\mathcal{C}$ -->
+
+<!-- $$ -->
+<!-- \frac{\frac{1}{N} \nu \mathbf{X}'\mathbf{X} \nu}{\| \nu \|_2^2} \geq \gamma \text{ for all nonzero} -->
+<!-- $$ -->
+
+### Bounds on prediction error
+
+See Theorem 11.2 @Hastie2015-gy.
+
+### Variable selection consistency
+
+Given an optimal lasso solution $\hat{\beta}$ does it have nonzero entries in the same positions as the true regression vector $\beta^*$. In other words, when does its support set equal the true support (sparsistency)?
+
+See Theorem 11.3 @Hastie2015-gy.
+
+
 # Computation
 
 ## Soft thresholding
@@ -224,29 +249,6 @@ and so the coordinate descent algorithm will converge to a global minimum.
 
 There are some generalisations of the lasso (e.g. fused lasso) which violate this separability condition which can result in coordinate descent becoming stuck and failing to reach the global minimum.
 
-# Some theory
-
-### Bounds on lasso $\ell_2$-error
-
-Can establish a bound on the $\ell_2$-norm loss between the lasso solution $\hat{\beta}$ and the true regression vector $\beta^*$. See Theorem 11.1 @Hastie2015-gy.
-
-<!-- #### Theorem -->
-
-<!-- Suppose that the model matrix $\mathbf{X}$ satisifes the restricted eigenvalue bound for $\gamma > 0$ and constraint set $\mathcal{C}$ -->
-
-<!-- $$ -->
-<!-- \frac{\frac{1}{N} \nu \mathbf{X}'\mathbf{X} \nu}{\| \nu \|_2^2} \geq \gamma \text{ for all nonzero} -->
-<!-- $$ -->
-
-### Bounds on prediction error
-
-See Theorem 11.2 @Hastie2015-gy.
-
-### Variable selection consistency
-
-Given an optimal lasso solution $\hat{\beta}$ does it have nonzero entries in the same positions as the true regression vector $\beta^*$. In other words, when does its support set equal the true support (sparsistency)?
-
-See Theorem 11.3 @Hastie2015-gy.
 
 # Generalisations of the lasso
 
@@ -390,7 +392,7 @@ hitters_train <- train(Salary~.,
                        method = "glmnet",
                        metric = "RMSE",
                        tuneGrid = expand.grid(alpha = 1,
-                                              lambda = 10^seq(1,-2,length=25)),
+                                              lambda = 10^seq(2,-2,length=25)),
                        trControl = trainControl(method = "cv",
                                                 number = 5))
 ```
