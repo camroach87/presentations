@@ -20,6 +20,8 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE
 )
+
+set.seed(1234)
 ```
 
 # The lasso
@@ -46,7 +48,7 @@ Ridge regression predates the lasso. Combines the the least-squares loss with an
 $$
 \min_{\beta_0, \boldsymbol{\beta}}  \left\{ 
   \frac{1}{2N} \sum^N_{i=1} \left(y_i -\beta_0 - \sum^p_{j=1} \beta_j x_{ij} \right)^2 +
-  \lambda \sum^p_{j=1} \left| \beta_j \right|
+  \lambda \sum^p_{j=1} \beta_j^2
 \right\},
 $$
 
@@ -55,12 +57,10 @@ where $\lambda \geq 0$ is the regularization weight.
 This can also be expressed in matrix form
 
 $$
-\min_{\boldsymbol{\beta}}  \left\{ 
+\min_{\boldsymbol{\beta}}  \left\{
   \frac{1}{2N} \| \mathbf{y} - \mathbf{X}\boldsymbol{\beta} \|^2_2 + \lambda \| \boldsymbol{\beta} \|_2
 \right\}.
 $$
-
-__TODO: Comment on $\beta_0$.__
 
 Differentiating with respect to $\boldsymbol{\beta}$ and setting equal to zero yields the solution
 
@@ -83,6 +83,8 @@ $$
 
 where $\lambda \geq 0$ is the regularization weight.
 
+We can remove the intercept term $\beta_0$ by scaling the data.
+
 This can also be expressed in matrix form
 
 $$
@@ -91,21 +93,19 @@ $$
 \right\}.
 $$
 
-__TODO: Comment on $\beta_0$.__
-
-Lasso is a quadratic programming problem.
+Lasso is a convex quadratic programming problem.
 
 The factor $\frac{1}{2N}$ can be omitted, but does make $\lambda$ comparable for different sample sizes [@Hastie2015-gy].
 
-----
+<!-- ---- -->
 
-Necessary and sufficient condition for solution takes the form
+<!-- Necessary and sufficient condition for solution takes the form -->
 
-$$
--\frac{1}{N}\left< \mathbf{x}_j, \mathbf{y} - \mathbf{X} \boldsymbol{\beta}\right> + \lambda s_j = 0, \quad j=1,\ldots,p,
-$$
+<!-- $$ -->
+<!-- -\frac{1}{N}\left< \mathbf{x}_j, \mathbf{y} - \mathbf{X} \boldsymbol{\beta}\right> + \lambda s_j = 0, \quad j=1,\ldots,p, -->
+<!-- $$ -->
 
-where $s_j$
+<!-- where $s_j$ -->
 
 ## Properties
 
@@ -139,9 +139,98 @@ The estimates of $\boldsymbol{\beta}$ given by ridge regression and the lasso ha
 ![Squared bias (black), variance (green) and test MSE (pink) of lasso ona a simulated data set. Image: @James2014-xw.](figures/bias-variance-lasso.png)
 </div>
 
-## Computation
+# Computation
 
-The lasso is a quadratic programming problem.
+## Soft thresholding
+
+<!-- The lasso is a quadratic programming problem with a convex constraint. -->
+
+Given the samples $\left\{ (x_i, y_i \right\}_{i=1}^N$ we wish to solve
+
+$$
+\min_{\beta}  \left\{ 
+  \frac{1}{2N} \sum^N_{i=1} \left(y_i - \beta x_i \right)^2 + \left| \beta \right|
+\right\}.
+$$
+
+Here we assume $\mathbf{x}$ and $\mathbf{y}$ have been standardised so that $\frac{1}{N} \sum_{i=1}^N y_i = 0$, $\frac{1}{N} \sum_{i=1}^N x_i = 0$ and $\frac{1}{N} \sum_{i=1}^N x_i^2 = 1$.
+
+Normally in a univariate setting we would simply take the gradient, set it to zero and solve for $\beta$. However, $\left| \beta \right|$ does not have a gradient at $\beta = 0$. Instead, we can see by inspection that
+
+$$
+\hat{\beta} = \begin{cases}
+  \frac{1}{N} \left< \mathbf{x}, \mathbf{y}\right> - \lambda, & \text{if} &\frac{1}{N} \left< \mathbf{x}, \mathbf{y}\right> > \lambda \\
+  0, & \text{if} &\frac{1}{N} |\left< \mathbf{x}, \mathbf{y}\right>| \leq \lambda \\
+  \frac{1}{N} \left< \mathbf{x}, \mathbf{y}\right> + \lambda, & \text{if} & \frac{1}{N} \left< \mathbf{x}, \mathbf{y}\right> < -\lambda.
+\end{cases}
+$$
+
+---
+
+This can be written as
+
+$$
+\hat{\beta} = \mathcal{S}_\lambda\left(\frac{1}{N} \left< \mathbf{x}, \mathbf{y}\right> \right),
+$$
+
+where 
+
+$$
+\mathcal{S}_\lambda\ = \text{sign}(x)(|x| - \lambda)_+
+$$
+
+is the _soft-thresholding operator_ and $x_+$ is equal to $x$ if $x>0$ and zero otherwise.
+
+## Cyclic coordinate descent
+
+In the case of multiple predictors we can use _cyclic coordinate descent_. The basic idea is to cycle through predictors in a fixed order and update a single coefficient at each step while holding others constant.
+
+At the $j^{\text{th}}$ step, coefficient $\beta_j$ is updated while $\left\{ \beta_k | k \neq j \right\}$ are held constant. The optimisation problem becomes
+
+$$
+\min_{\beta_0, \boldsymbol{\beta}}  \left\{ 
+  \frac{1}{2N} \sum^N_{i=1} \left(y_i - \sum_{k\neq j} \beta_k x_{ik} - \beta_j x_{ij} \right)^2 +
+  \lambda \sum_{k \neq j} \left| \beta_k \right| + \lambda \left| \beta_j \right|
+\right\}.
+$$
+
+The solution for $\beta_j$ can be expressed in terms of the partial residual $r_i^{(j)} = y_i - \sum_{k \neq j} \hat{\beta}_k x_{ik}$. We can now use the soft-thresholding operator to update $\beta_j$
+
+$$
+\hat{\beta}_j = \mathcal{S}_\lambda\left(\frac{1}{N} \left< \mathbf{x}_j, \mathbf{r}^{(j)} \right> \right).
+$$
+
+----
+
+A sufficient condition for coordinate descent to converge to a global minimum is for our convex cost function $f$ to be continuously differentiable and strictly convex. Clearly this is too restrictive when trying to solve for the lasso, but we can get around this with a separability condition
+
+$$
+f(\beta_1, \ldots, \beta_p) = g(\beta_1, \ldots, \beta_p) + \sum_{j=1}^p h_j(\beta_j),
+$$
+
+where $g: \mathbb{R}^p \rightarrow \mathbb{R}$ is differentiable and convex, and $h: \mathbb{R} \rightarrow \mathbb{R}$ is convex, but not necessarily differentiable. Any convex cost function with this separability condition will converge [@Tseng2001-lk].
+
+In the case of the lasso, we have
+
+$$
+\begin{aligned}
+  g(\beta) &= \frac{1}{N} \| \mathbf{y} - \mathbf{X}\beta \|_2^2 \\
+  h_j(\beta_j) &= \lambda |\beta_j|,
+\end{aligned}
+$$
+
+and so the coordinate descent algorithm will converge to a global minimum.
+
+There are some generalisations of the lasso (e.g. fused lasso) which violate this separability condition which can result in coordinate descent becoming stuck and failing to reach the global minimum.
+
+# Some theory
+
+## Bounds on lasso $\ell_2$-error
+
+
+## Variable selection consistency
+
+
 
 # Generalisations of the lasso
 
@@ -169,7 +258,7 @@ Again, covariates can be centered to remove the intercept $\beta_0$ which may th
 ----
 
 <div class="centered">
-![Comparison of elastic-net constraints (left) and lasso (right) in $\mathbb{R}^3$. Curved contours encourage strongly correlated variables to share coefficients. Image: @Hastie2015-gy.](figures/elastic-net-constraint.png)
+![Comparison of elastic net constraints (left) and lasso (right) in $\mathbb{R}^3$. Curved contours encourage strongly correlated variables to share coefficients. Image: @Hastie2015-gy.](figures/elastic-net-constraint.png)
 </div>
 
 ## Group lasso
@@ -195,6 +284,12 @@ $$
 
 ----
 
+Note that
+
+* depending on $\lambda \geq 0$ either the entire vector $\hat{\theta}_j$ will be zero, or all elements will be non-zero.
+* if $p_j = 1$ for all $j$ we have $\| \theta_j\|_2 = |\theta_j|$ and so the group lasso reduces to the ordinary lasso.
+
+----
 <div class="centered">
 ![Comparison of group lasso constraints (left) and lasso (right) in $\mathbb{R}^3$. In the group lasso case there are two groups $\theta_1 = (\beta_1, \beta_2)$ and $\theta_2 = \beta_3$. The pointy bit at the top is where $\theta_1$ (and by extension $\beta_1$ and $\beta_2$) will be set to zero. Image: @Hastie2015-gy.](figures/group-lasso-constraint.png)
 </div>
@@ -202,12 +297,22 @@ $$
 ----
 ### Sparsity with group lasso
 
-__TODO__
+Sometimes it is necessary to have sparsity with respect to which groups are non-zero and which coefficients within a group are non-zero. Can enforce within-group sparsity by applying an additional $\ell_1$ norm, which gives the convex problem
+
+$$
+\min_{\theta_0 \in \mathbb{R}, \theta_j \in \mathbb{R}^{p_j}}
+\left\{
+  \frac{1}{2} \sum_{i=1}^n \left( y_i - \theta_0 - \sum_{j=1}^J z_{ij}'\theta_j \right)^2 + 
+  \lambda \sum_{j=1}^J \left[ (1-\alpha) \|\theta_j\|_2  + \alpha \|\theta_j\|_1 \right]
+\right\},
+$$
+
+where $\alpha \in [0,1]$.
 
 ## Fused lasso
 
 <div class="centered">
-![Fused lasso example. Image: @Hastie2015-gy.](figures/fused-lasso-example.png)
+![Fused lasso example using comparative genomic hybridization data. The green line is the fused lasso estimate. Image: @Hastie2015-gy.](figures/fused-lasso-example.png)
 </div>
 
 ----
@@ -230,9 +335,23 @@ where $\lambda_1, \lambda_2 \geq 0$ are the regularization weights.
 
 The $\lambda_1$ penalty functions as the $\ell_1$ penalty.
 
-The $lambda_2$ penalty encourages neighbouring coefficients to be similar.
+The $\lambda_2$ penalty encourages neighbouring coefficients to be similar.
 
-# Fun with R!
+----
+
+* The piecewise-constant notion can be expanded to handle more general neighbourhoods, such as pixels in an image. Simply adjust the second penalty to sum over all neighbouring pairs $\lambda_2 \sum_{i \sim i'} | \theta_i - \theta_{i'}|$.
+* Instead of associating every observation with a coefficient we can solve for $p$ predictors
+
+$$
+\min_{\beta_0, \boldsymbol{\beta}}
+\left\{
+  \frac{1}{2} \sum_{i=1}^N (y_i - \beta_0 - \sum_j^p x_{ij}\beta_j)^2 
+  + \lambda_1 \sum_{j=1}^p | \beta_j|
+  + \lambda_2 \sum_{j=2}^p | \beta_j - \beta_{j-1}|
+\right\}.
+$$
+
+# Lasso with R
 
 ## A quick example
 
