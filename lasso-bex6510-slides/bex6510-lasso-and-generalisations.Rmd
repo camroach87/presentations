@@ -226,9 +226,9 @@ There are some generalisations of the lasso (e.g. fused lasso) which violate thi
 
 # Some theory
 
-## Bounds on lasso $\ell_2$-error
+### Bounds on lasso $\ell_2$-error
 
-See Theorem 11.1 @Hastie2015-gy.
+Can establish a bound on the $\ell_2$-norm loss between the lasso solution $\hat{\beta}$ and the true regression vector $\beta^*$. See Theorem 11.1 @Hastie2015-gy.
 
 <!-- #### Theorem -->
 
@@ -238,7 +238,13 @@ See Theorem 11.1 @Hastie2015-gy.
 <!-- \frac{\frac{1}{N} \nu \mathbf{X}'\mathbf{X} \nu}{\| \nu \|_2^2} \geq \gamma \text{ for all nonzero} -->
 <!-- $$ -->
 
-## Variable selection consistency
+### Bounds on prediction error
+
+See Theorem 11.2 @Hastie2015-gy.
+
+### Variable selection consistency
+
+Given an optimal lasso solution $\hat{\beta}$ does it have nonzero entries in the same positions as the true regression vector $\beta^*$. In other words, when does its support set equal the true support (sparsistency)?
 
 See Theorem 11.3 @Hastie2015-gy.
 
@@ -371,7 +377,7 @@ A quick example using `R`'s `caret` and `glmnet` packages. Can use `glmnet` dire
 * cross-validation, and
 * grid search for parameter tuning.
 
-How do we coose $\lambda$? Cross-validation!
+How do we choose $\lambda$? Cross-validation!
 
 ```{r caret-glmnet}
 require(caret)
