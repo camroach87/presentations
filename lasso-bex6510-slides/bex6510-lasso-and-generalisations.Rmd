@@ -26,12 +26,15 @@ set.seed(1234)
 
 # The lasso
 
-## Introduction
+## Introduction {.build}
 
 * Introduced by @Tibshirani1996-fg (21,216 citations!).
 * Allows for automatic variable selection.
 * Optimisation problem is convex and can be solved efficiently.
 
+<div class="centered">
+![What I thought when I saw the Kingsmen 2 trailer. Image: Efficient memes for Sassy Econometricians.](figures/kingsmen.jpg)
+</div>
 
 ## Motivation
 
@@ -41,6 +44,7 @@ We are given $N$ samples $\left\{ (\mathbf{x}_i, y_i) \right\}_{i=1}^N$ where $\
 * _Interpretation_: difficult if $p$ is large.
 
 The lasso addresses these two issues.
+
 
 ## Ridge regression
 
