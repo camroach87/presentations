@@ -44,7 +44,7 @@ The lasso addresses these two issues.
 
 ## Ridge regression
 
-Ridge regression predates the lasso. Combines the the least-squares loss with an $\ell_2$ penalty. It finds the solution to
+Ridge regression predates the lasso. Combines the least-squares loss with an $\ell_2$ penalty. It finds the solution to
 
 $$
 \min_{\beta_0, \boldsymbol{\beta}}  \left\{ 
