@@ -120,6 +120,8 @@ The estimates of $\boldsymbol{\beta}$ given by ridge regression and the lasso ha
 * Lasso handles sparsity well (only a few non-zero columns).
 * Lasso does not handle highly correlated predictors well.
 
+A drawback of the lasso is that statistical inference via "p-values" is difficult. Bayesian and bootstrap methods have been proposed to deal with this issue. See Chapter 6 of @Hastie2015-gy for a discussion.
+
 ----
 
 ### Parameter estimation
@@ -285,7 +287,7 @@ Again, covariates can be centered to remove the intercept $\beta_0$ which may th
 
 ## Group lasso
 
-Sometimes covariates have a group structure and it is preferable to have all coefficients within a group shrunk to zero simultaneously.
+Sometimes covariates have a group structure and it is preferable to have all coefficients within a group shrunk to zero simultaneously. An example is when we have a categorical predictor and wish to include/exclude all dummy variables together.
 
 Let $Z_j \in \mathbb{R}^{p_j}$ be the covariates in group $j \in 1,\ldots,J$. We wish to predict $Y \in \mathbb{R}$ based on the $Z_j$
 
