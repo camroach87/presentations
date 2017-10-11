@@ -24,6 +24,13 @@ knitr::opts_chunk$set(
 set.seed(1234)
 ```
 
+## Structure
+
+* The lasso
+* Computation
+* Generalisations of the lasso
+* Lasso with R
+
 # The lasso
 
 ## Introduction {.build}
@@ -33,7 +40,7 @@ set.seed(1234)
 * Optimisation problem is convex and can be solved efficiently.
 
 <div class="centered">
-![What I thought when I saw the Kingsmen 2 trailer. Image: Efficient memes for Sassy Econometricians.](figures/kingsmen.jpg)
+![Image: Efficient memes for Sassy Econometricians.](figures/kingsmen.jpg)
 </div>
 
 ## Motivation
@@ -88,7 +95,7 @@ $$
 
 where $\lambda \geq 0$ is the regularization weight.
 
-We can remove the intercept term $\beta_0$ by scaling the data.
+We can remove the intercept term $\beta_0$ by centering the data.
 
 This can also be expressed in matrix form
 
@@ -117,7 +124,7 @@ The factor $\frac{1}{2N}$ can be omitted, but does make $\lambda$ comparable for
 The estimates of $\boldsymbol{\beta}$ given by ridge regression and the lasso have different properties despite their similarity.
 
 * Ridge regression pushes coefficients towards zero, whereas lasso can make certain coefficients exactly equal to zero.
-* Lasso handles sparsity well (only a few non-zero columns).
+* Lasso encourages sparsity (only a few non-zero coefficients).
 * Lasso does not handle highly correlated predictors well.
 
 A drawback of the lasso is that statistical inference via "p-values" is difficult. Bayesian and bootstrap methods have been proposed to deal with this issue. See Chapter 6 of @Hastie2015-gy for a discussion.
@@ -181,7 +188,7 @@ Given the samples $\left\{ (x_i, y_i \right\}_{i=1}^N$ we wish to solve
 
 $$
 \min_{\beta}  \left\{ 
-  \frac{1}{2N} \sum^N_{i=1} \left(y_i - \beta x_i \right)^2 + \left| \beta \right|
+  \frac{1}{2N} \sum^N_{i=1} \left(y_i - \beta x_i \right)^2 + \lambda \left| \beta \right|
 \right\}.
 $$
 
@@ -220,7 +227,7 @@ In the case of multiple predictors we can use _cyclic coordinate descent_. The b
 At the $j^{\text{th}}$ step, coefficient $\beta_j$ is updated while $\left\{ \beta_k | k \neq j \right\}$ are held constant. The optimisation problem becomes
 
 $$
-\min_{\beta_0, \boldsymbol{\beta}}  \left\{ 
+\min_{\beta_k}  \left\{ 
   \frac{1}{2N} \sum^N_{i=1} \left(y_i - \sum_{k\neq j} \beta_k x_{ik} - \beta_j x_{ij} \right)^2 +
   \lambda \sum_{k \neq j} \left| \beta_k \right| + \lambda \left| \beta_j \right|
 \right\}.
