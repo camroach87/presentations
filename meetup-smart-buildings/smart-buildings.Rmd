@@ -43,7 +43,7 @@ data <- read_csv("data/data.csv") %>%
   rename(Value = value) %>% 
   select(-time)
 
-sensor_sample <- sample(unique(data$Sensor), 8)
+sensor_sample <- sample(unique(data$Sensor), 10)
 ```
 
 ## TODO
@@ -121,12 +121,12 @@ data %>%
   ggplot(aes(x = Time, fill = Sensor)) +
   geom_density(bw=100, alpha = 0.7, colour=NA) +
   geom_rug() + 
-  facet_wrap(~Sensor, scales = "free_y", ncol = 1, strip.position = "left") +
+  facet_wrap(~Sensor, scales = "free_y", ncol = 1, strip.position = "right") +
   labs(title = "Sensor reading times",
        x = "Time") +
   scale_fill_manual(values = ba_palette) +
   theme(legend.position = "none",
-        strip.text.y = element_text(angle = 180),
+        strip.text.y = element_text(angle = 0),
         axis.title.y=element_blank(),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank())
