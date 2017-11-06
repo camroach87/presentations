@@ -15,3 +15,25 @@ slides > slide:not(.nobackground):before {
   height: 53px;
   background-size: 213px 53px;
 }
+
+table.rmdtable th {
+  color: white;
+  font-size: 18px;
+  background: #3d6b78;
+  background: #3d6b78;
+  background: #3d6b78;
+  background: #3d6b78;
+  background: #3d6b78;
+}
+
+slides > slide.dark {
+  background: -webkit-linear-gradient(#e4e4d7, #60bb6b, #3d6b78 82%)!important;
+}
+
+aside.gdbar {
+  background: -webkit-gradient(linear, 0% 50%, 100% 50%, color-stop(0%, #ededed), color-stop(100%, #ededed)) no-repeat;
+  background: -webkit-linear-gradient(left, #ededed, #ededed) no-repeat;
+  background: -moz-linear-gradient(left, #ededed, #ededed) no-repeat;
+  background: -o-linear-gradient(left, #ededed, #ededed) no-repeat;
+  background: linear-gradient(left, #ededed, #ededed) no-repeat;
+}
