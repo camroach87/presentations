@@ -8,16 +8,42 @@ nocite: |
 output:
   ioslides_presentation:
     css: css/styles.css
+    fig_height: 5.5
+    fig_width: 10
     logo: fig/BA-LOGO-RGB-Web-LRG.png
     widescreen: yes
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-	echo = TRUE,
+	echo = FALSE,
 	message = FALSE,
 	warning = FALSE
 )
+
+rm(list=ls())
+
+require(readr)
+require(dplyr)
+require(tidyr)
+require(ggplot2)
+require(lubridate)
+require(hms)
+
+set.seed(1234)
+
+ba_palette = c("#3d6b78", "#60bb6b", "#d52f59", "#f5b835", "#2dbbd6",
+               "#816b93", "#b84f80", "#f08c3e", "#c1b97d", "#7e450a",
+               "#d4d700", "#00978f")
+
+data <- read_csv("data/data.csv") %>% 
+  mutate(DT = as.POSIXct(time, origin="1970-01-01"),
+         Date = floor_date(DT, "day"),
+         Time = hms(second(DT), minute(DT), hour(DT))) %>% 
+  rename(Value = value) %>% 
+  select(-time)
+
+sensor_sample <- sample(unique(data$Sensor), 8)
 ```
 
 ## Overview
@@ -46,6 +72,42 @@ knitr::opts_chunk$set(
 * Dealing with thousands of unevenly spaced time-series.
 * We can extract features from the time-series.
 * Each day of data will have
+
+----
+
+```{r plot-bms-raw}
+data %>%
+  filter(Sensor %in% sensor_sample) %>% 
+  ggplot(aes(x=DT, y=Value, colour = Sensor)) +
+  geom_line() + 
+  facet_wrap(~Sensor, ncol = 2, scales = "free_y") +
+  labs(title = "BMS data",
+       x = "Date") +
+  scale_color_manual(values = ba_palette) + 
+  theme(legend.position = "none")
+```
+
+----
+
+```{r plot-raw-timing}
+data %>%
+  filter(Sensor %in% sensor_sample,
+         Time >= hms(1,1,0),
+         Time < hms(1,1,3)) %>% 
+  ggplot(aes(x = Time, fill = Sensor)) +
+  geom_density(bw=100, alpha = 0.7, colour=NA) +
+  geom_rug() + 
+  facet_wrap(~Sensor, scales = "free_y", ncol = 1, strip.position = "left") +
+  labs(title = "Sensor reading times",
+       x = "Time") +
+  scale_fill_manual(values = ba_palette) +
+  theme(legend.position = "none",
+        strip.text.y = element_text(angle = 180),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+```
+
 
 
 ## Dimension reduction and clustering
@@ -109,7 +171,7 @@ Find the $m$ eigenvectors $\mathbf{Z}_{n \times m}$ corresponding to the $m$ sma
 
 ## Simple example {.smaller}
 
-```{python dash-simple-app, eval=FALSE}
+```{python dash-simple-app, eval=FALSE, echo=TRUE}
 import dash
 from dash.dependencies import Input, Output
 import dash_core_components as dcc
