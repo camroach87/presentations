@@ -50,7 +50,7 @@ sensor_sample <- sample(unique(data$Sensor), 10)
 ## TODO
 
 * Finish BMS section
-* Show a plot of all the time-series overlayed (messy) and then a plot of the spectral embedding dimensionaity reduction (clean!). Maybe show clustering as well.
+* Show a plot of all the time-series overlapping (messy) and then a plot of the spectral embedding dimensionaity reduction (clean!). Maybe show clustering as well.
 
 ## Overview
 
@@ -73,11 +73,11 @@ sensor_sample <- sample(unique(data$Sensor), 10)
 
 ## How does this work in practice?
 
-Contractor comes in, sets up a BMS. The BMS will behave in a certain way based predefined rules.
+Vendor comes in, sets up a BMS. The BMS will behave in a certain way based predefined rules.
 
-For instance - if high temperature readings are recorded in a room, more cooling will happen.
+Simple example - if high temperature readings are recorded in a room, more cooling will happen.
 
-BMS systems are costly to implement and to change. Can often require large amounts of code just to change a temperature set point.
+BMS systems are costly to implement and to change. Can often require large amounts of recoding just to change a temperature set point.
 
 ## So what can we do?
 
@@ -87,15 +87,9 @@ BMS systems are costly to implement and to change. Can often require large amoun
     + Qualitative methods
     + Quantitative
 * Buildings Alive's goal is to build an automated fault detection method to suit the data that we've collected and which can scale to multiple buildings.
+* Collect data using our E2 device and analyse!
 
 # Analysing the data | Feature extraction, dimensionality reduction, clustering
-
-## Feature extraction
-
-* Collect data using our E2 device.
-* Dealing with thousands of unevenly spaced time-series.
-* We can extract features from the time-series.
-* Each day of data will have
 
 ----
 
@@ -132,6 +126,12 @@ data %>%
         axis.ticks.y=element_blank())
 ```
 
+## Feature extraction
+
+* Dealing with thousands of unevenly spaced time-series.
+* Uneven spacing in time-series presents difficulties
+* Rather than rounding or imputing data, extract features and analyse them.
+
 ## What features might be useful? {.smaller}
 
 * Mean
@@ -140,10 +140,10 @@ data %>%
 * Skewness
 * Biggest change ($\max_i \left\{ \left| y_{t_i} - y_{t_{i-1}} \right| \right\}$)
 * Smallest change ($\min_i \left\{ \left| y_{t_i} - y_{t_{i-1}} \right| \right\}$)
-* Number of "zero crossings" per day
 * Number of "mean crossings" per day
 * Number of observations per day
-* Polynomial coefficients
+
+Normalise these to span the range $\left[ 0, 1\right]$ to prevent certain features dominating the clustering [@Wang2006-tz].
 
 ----
 
