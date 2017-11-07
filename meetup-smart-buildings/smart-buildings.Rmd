@@ -4,7 +4,7 @@ author: "Cameron Roach"
 date: "9 November 2017"
 bibliography: library.bib
 nocite: |
-  @Murphy2012-bc, @Friedman2001-vq
+  @Murphy2012-bc, @Friedman2001-vq, @Von_Luxburg2007-dt
 output:
   ioslides_presentation:
     css: css/styles.css
@@ -29,6 +29,7 @@ require(tidyr)
 require(ggplot2)
 require(lubridate)
 require(hms)
+require(e1071)
 
 set.seed(1234)
 
@@ -49,8 +50,7 @@ sensor_sample <- sample(unique(data$Sensor), 10)
 ## TODO
 
 * Finish BMS section
-* Show a plot of spectral embedding. Also clustering maybe?
-* Add a reference to that spectral clustering paper.
+* Show a plot of all the time-series overlayed (messy) and then a plot of the spectral embedding dimensionaity reduction (clean!). Maybe show clustering as well.
 
 ## Overview
 
@@ -132,7 +132,59 @@ data %>%
         axis.ticks.y=element_blank())
 ```
 
+## What features might be useful? {.smaller}
 
+* Mean
+* Standard deviation
+* Kurtosis
+* Skewness
+* Biggest change ($\max_i \left\{ \left| y_{t_i} - y_{t_{i-1}} \right| \right\}$)
+* Smallest change ($\min_i \left\{ \left| y_{t_i} - y_{t_{i-1}} \right| \right\}$)
+* Number of "zero crossings" per day
+* Number of "mean crossings" per day
+* Number of observations per day
+* Polynomial coefficients
+
+----
+
+```{r}
+sensor_sample_features <- unique(data$Sensor)[c(2,33,250)]
+
+data %>%
+  filter(Sensor %in% sensor_sample_features) %>% 
+  ggplot(aes(x=DT, y=Value, colour = Sensor)) +
+  geom_line() + 
+  facet_wrap(~Sensor, ncol = 1, scales = "free_y") +
+  labs(title = "BMS data",
+       x = "Date") +
+  scale_color_manual(values = ba_palette) + 
+  theme(legend.position = "none")
+```
+
+----
+
+```{r}
+data %>%
+  filter(Sensor %in% sensor_sample_features) %>% 
+  group_by(Sensor) %>% 
+  arrange(DT) %>% 
+  summarise(Mean = mean(Value, na.rm = TRUE),
+            `Standard deviation` = sd(Value, na.rm = TRUE),
+            Kurtosis = kurtosis(Value, na.rm = TRUE),
+            Skewness = skewness(Value, na.rm = TRUE),
+            `Max change` = abs(max(Value - lag(Value), na.rm = TRUE)),
+            `Min change` = abs(min(Value - lag(Value), na.rm = TRUE))) %>% 
+  gather(Var, Value, -Sensor) %>% 
+  ggplot(aes(x=Var, y=Value, colour = Sensor)) +
+  geom_col(width = 0) + 
+  geom_point() +
+  facet_wrap(~Sensor, ncol = 1) +
+  labs(title = "BMS data",
+       x = "Features") +
+  scale_color_manual(values = ba_palette) + 
+  theme(legend.position = "none") +
+  coord_flip()
+```
 
 ## Dimension reduction and clustering
 
@@ -196,8 +248,11 @@ Find the $m$ eigenvectors $\mathbf{Z}_{n \times m}$ corresponding to the $m$ sma
 
 ----
 
-__TODO: Add screen shot of fancy Dash app.__
+<div class="centered">
 
+![](fig/dash-example.png)
+
+</div>
 
 ## Simple example {.smaller}
 
@@ -210,13 +265,14 @@ import pandas as pd
 
 app = dash.Dash()
 
-### <b>
 app.layout = html.Div([
     dcc.Dropdown(id='my-dropdown',
-                 options=['A', 'B', 'C']),
+                 options=[{'label': 'Option A', 'value': 'A'},
+                          {'label': 'Option B', 'value': 'B'}]),
     dcc.Graph(id='my-graph')
 ])
 
+### <b>
 @app.callback(Output('my-graph', 'figure'),
               [Input('my-dropdown', 'value')])
 def update_graph(dd_value):
