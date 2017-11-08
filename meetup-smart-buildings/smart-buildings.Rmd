@@ -62,15 +62,25 @@ sensor_sample <- sample(unique(data$Sensor), 10)
 
 ## What is a BMS?
 
+<!-- <div class="columns-2"> -->
+
 * Commercial buildings contain Building Management Systems (BMSs).
 * Control heating, cooling, ventilation and lighting systems.
 * Typically contain a lot of sensors (>100,000).
 
+----
+
+<div class="centered">
+
+![](fig/bms-components.jpg)
+
+</div>
+
 ## How does this work in practice?
 
-Vendor comes in, sets up a BMS. The BMS will behave in a certain way based predefined rules.
+Vendor sets up a BMS. The BMS will behave in a certain way based predefined rules.
 
-Simple example - if high temperature readings are recorded in a room, more cooling will happen.
+Simple example - if high temperature readings are recorded in a room, chillers and air handling units will activate.
 
 BMS systems are costly to implement and to change. Can often require large amounts of recoding just to change a temperature set point.
 
@@ -81,8 +91,9 @@ BMS systems are costly to implement and to change. Can often require large amoun
     + Statistical methods
     + Qualitative methods
     + Quantitative
-* Buildings Alive's goal is to build an automated fault detection method to suit the data that we've collected and which can scale to multiple buildings.
-* Collect data using our E2 device and analyse!
+* Buildings Alive's goal is to
+    + Collect BMS data using our E2 device
+    + Analyse and present data in an interpretable manner.
 
 # Analysing the data | Feature extraction, dimensionality reduction, clustering
 
@@ -125,7 +136,7 @@ data %>%
 ## Feature extraction
 
 * Dealing with thousands of unevenly spaced time-series.
-* Uneven spacing in time-series presents difficulties
+* Uneven spacing in time-series presents difficulties.
 * Rather than rounding or imputing data, extract features and analyse them.
 
 ## What features might be useful? {.smaller}
@@ -296,6 +307,8 @@ if __name__ == '__main__':
 ```
 
 ## Demonstration
+
+
 
 # Thank-you for listening! | Any questions?
 
