@@ -1,19 +1,20 @@
+/* original is 1050px x 142px */
 .gdbar img {
-  width: 425.25px !important;
-  height: 106.5px !important;
+  width: 840px !important;
+  height: 113.6px !important;
   margin: 8px 8px;
 }
 
 .gdbar {
-  width: 430px !important;
-  height: 110px !important;
+  width: 850px !important;
+  height: 120px !important;
   color: blue;
 }
 
 slides > slide:not(.nobackground):before {
-  width: 213px;
-  height: 53px;
-  background-size: 213px 53px;
+  width: 262.5px;
+  height: 35.5px;
+  background-size: 262.5px 35.5px;
 }
 
 table.rmdtable th {
