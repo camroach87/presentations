@@ -58,6 +58,8 @@ sensor_sample <- sample(unique(data$Sensor), 10)
 ## How do commercial buildings work?
 
 * Facility managers oversee the day to day operations of a commercial building.
+* Used to be a whole team!
+* Shrinking maintenance budgets and increasing complexity makes this a challenging problem.
 * Building operations are automated by Building Management Systems (BMSs).
 
 ## What is a BMS?
@@ -66,7 +68,11 @@ sensor_sample <- sample(unique(data$Sensor), 10)
 
 * Commercial buildings contain Building Management Systems (BMSs).
 * Control heating, cooling, ventilation and lighting systems.
-* Typically contain a lot of sensors (>100,000).
+* Typically contain a lot of points (>1,000).
+    + Sensors, Actuators (inputs ouputs)
+    + Software point: schedule, trend logs, calculations, processing Virtual points
+
+Read sensors, process things, do stuff to actuators (e.g. fans motors dampers). Sensors are temperature humidity pressure. My sensor def is also metadata inside controller.
 
 ----
 
@@ -80,20 +86,30 @@ sensor_sample <- sample(unique(data$Sensor), 10)
 
 Vendor sets up a BMS. The BMS will behave in a certain way based predefined rules.
 
-Simple example - if high temperature readings are recorded in a room, chillers and air handling units will activate.
+Simple example - if high temperature readings are recorded in a room, dampers will open and air handlers will modulate to provide cooler air.
 
-BMS systems are costly to implement and to change. Can often require large amounts of recoding just to change a temperature set point.
+BMS systems are costly to implement and to change. Can often require large amounts of recoding just to tune the BMS's behaviour.
+
+Where is the BMS working well and where is it working badly? Find issues on BMS operation.
+
+Heating valve locked open - lots of cooling to make the room work. When things go wrong can take a lot of time to dig in and fix it up.
+
+The bigger the BMS is the harder it is to find what matters.
 
 ## So what can we do?
 
-* Help facility managers identify when a building is behaving erratically (automated fault detection).
+* Help facility managers identify if a BMS is operating optimally.
+    + Fault detection
+    + Diagnostics
 * Wealth of literature on fault detection
     + Statistical methods
     + Qualitative methods
-    + Quantitative
+    + Quantitative methods
 * Buildings Alive's goal is to
     + Collect BMS data using our E2 device
-    + Analyse and present data in an interpretable manner.
+    + Analyse and present data into useful information.
+    + Help guide FM's to find out what's wrong.
+    + Timely and actionable information.
 
 # Analysing the data | Feature extraction, dimensionality reduction, clustering
 
@@ -254,7 +270,7 @@ where,
 Once $\mathbf{L}$ is determined find the $m$ eigenvectors $\mathbf{Z}_{n \times m}$ corresponding to the $m$ smallest eigenvalues of $\mathbf{L}$. Finally, cluster the rows of $\mathbf{Z}_{n \times m}$ using K-means.
 
 
-# Building an end product | Prototyping with Dash
+# Building a prototype | Prototyping with Dash
 
 ## Dash
 
