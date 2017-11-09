@@ -57,7 +57,7 @@ sensor_sample <- sample(unique(data$Sensor), 10)
 
 ## How do commercial buildings work?
 
-* Facility managers oversee the day to day operations of a commercial building.
+* Facility managers (FMs) oversee the day to day operations of a commercial building.
 * Used to be a whole team!
 * Shrinking maintenance budgets and increasing complexity makes this a challenging problem.
 * Building operations are automated by Building Management Systems (BMSs).
@@ -86,7 +86,7 @@ sensor_sample <- sample(unique(data$Sensor), 10)
 > - Vendor sets up a BMS. The BMS will behave in a certain way based predefined rules.
 > - BMS systems are costly to implement and to modify. Can require a lot of coding to change the BMS's behaviour.
 > - The bigger the BMS is the harder it is to find what matters. Locating problems is difficult and time-consuming.
-> - For example, a heating valve might be locked open. If this isn't detected the BMS will cool the room to reach required temperature.
+> - For example, a heating valve might be locked open. If this isn't detected the BMS will cool the room to reach the required temperature.
 
 <!-- > - When things go wrong can take a lot of time to dig in and fix it up. -->
 
@@ -313,8 +313,6 @@ if __name__ == '__main__':
 ```
 
 ## Demonstration
-
-__TODO: Add image__
 
 # Thank you for listening! | Any questions?
 
