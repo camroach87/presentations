@@ -66,52 +66,42 @@ sensor_sample <- sample(unique(data$Sensor), 10)
 
 <!-- <div class="columns-2"> -->
 
-* Commercial buildings contain Building Management Systems (BMSs).
-* Control heating, cooling, ventilation and lighting systems.
-* Typically contain a lot of points (>1,000).
-    + Sensors, Actuators (inputs ouputs)
-    + Software point: schedule, trend logs, calculations, processing Virtual points
+> - Commercial buildings contain Building Management Systems (BMSs) to improve indoor environment quality and reduce energy consumption.
+> - A BMS will control heating, cooling, ventilation and lighting systems.
+> - Contain thousands of points for sensors (temperature, humidity), actuators (fans, motors, dampers) and software (schedule, trend logs, calculations).
+> - A BMS will monitor sensors and adjust actuators based on their readings.
+> - For example, if high temperatures are recorded in a room, dampers will open and air handlers will modulate to provide cooler air.
 
-Read sensors, process things, do stuff to actuators (e.g. fans motors dampers). Sensors are temperature humidity pressure. My sensor def is also metadata inside controller.
 
 ----
 
 <div class="centered">
 
-![](fig/bms-components.jpg)
+![](fig/bms-components.png)
 
 </div>
 
 ## How does this work in practice?
 
-Vendor sets up a BMS. The BMS will behave in a certain way based predefined rules.
+> - Vendor sets up a BMS. The BMS will behave in a certain way based predefined rules.
+> - BMS systems are costly to implement and to change. Can often require large amounts of recoding to tune the BMS's behaviour.
+> - The bigger the BMS is the harder it is to find what matters. Locating problems is difficult and time-consuming.
+> - For example, a heating valve might be locked open. If this isn't detected the BMS will cool the room to reach required temperature.
 
-Simple example - if high temperature readings are recorded in a room, dampers will open and air handlers will modulate to provide cooler air.
-
-BMS systems are costly to implement and to change. Can often require large amounts of recoding just to tune the BMS's behaviour.
-
-Where is the BMS working well and where is it working badly? Find issues on BMS operation.
-
-Heating valve locked open - lots of cooling to make the room work. When things go wrong can take a lot of time to dig in and fix it up.
-
-The bigger the BMS is the harder it is to find what matters.
+<!-- > - When things go wrong can take a lot of time to dig in and fix it up. -->
 
 ## So what can we do?
 
 * Help facility managers identify if a BMS is operating optimally.
     + Fault detection
     + Diagnostics
-* Wealth of literature on fault detection
-    + Statistical methods
-    + Qualitative methods
-    + Quantitative methods
 * Buildings Alive's goal is to
     + Collect BMS data using our E2 device
-    + Analyse and present data into useful information.
+    + Analyse and transform data into useful information.
     + Help guide FM's to find out what's wrong.
-    + Timely and actionable information.
+    + Provide timely and actionable information.
 
-# Analysing the data | Feature extraction, dimensionality reduction, clustering
+# Analysing the data | Feature generation, dimensionality reduction, clustering
 
 ----
 
@@ -121,7 +111,7 @@ data %>%
   ggplot(aes(x=DT, y=Value, colour = Sensor)) +
   geom_line() + 
   facet_wrap(~Sensor, ncol = 2, scales = "free_y") +
-  labs(title = "BMS data",
+  labs(title = "BMS sensor data",
        x = "Date") +
   scale_color_manual(values = ba_palette) + 
   theme(legend.position = "none")
@@ -149,15 +139,15 @@ data %>%
         axis.ticks.y=element_blank())
 ```
 
-## Feature extraction
+## Feature generation
 
 * Dealing with thousands of unevenly spaced time-series.
 * Uneven spacing in time-series presents difficulties.
-* Rather than rounding or imputing data, extract features and analyse them.
+* Rather than rounding or imputing data we can generate features and work with them instead.
 
 ## What features might be useful? {.smaller}
 
-Feature extraction for clustering discussed in @Wang2006-tz. Some useful features for our case might be
+Feature generation for time-series clustering is discussed in @Wang2006-tz. Some useful features for our case might be
 
 * Mean
 * Standard deviation
@@ -183,7 +173,8 @@ data %>%
   ggplot(aes(x=DT, y=Value, colour = Sensor)) +
   geom_line() + 
   facet_wrap(~Sensor, ncol = 1, scales = "free_y") +
-  labs(title = "BMS data",
+  labs(title = "BMS sensor data",
+       subtitle = "Raw data",
        x = "Date") +
   scale_color_manual(values = ba_palette) + 
   theme(legend.position = "none")
@@ -216,7 +207,8 @@ data %>%
   geom_col(width = 0) + 
   geom_point() +
   facet_wrap(~Sensor, ncol = 1) +
-  labs(title = "BMS data",
+  labs(title = "BMS sensor data",
+       subtitle = "Feature generation",
        x = "Features") +
   scale_color_manual(values = ba_palette) + 
   theme(legend.position = "none") +
@@ -227,7 +219,7 @@ data %>%
 
 * Too many sensors to visualise easily.
 * Use dimensionality reduction.
-* Look for clusters.
+* Identify clusters and singletons.
 
 ----
 
@@ -235,12 +227,10 @@ data %>%
 
 Method | Advantages | Disadvantages 
 -------|------------|----------------
-K-means | Easy to learn | Outperformed by other algorithms
-K-medoids | Better performance than K-means | Can suffer from local minima
-Dirichlet process | | 
-Affinity propagation | Automatically determines number of clusters | 
-Spectral clustering | Good performance and efficient |
-Hierarchical clustering | Produces a dendrogram - no "flat" clustering | 
+K-means | Easy to learn. | Outperformed by other algorithms.
+Hierarchical clustering | Informative - produces a dendrogram. | Not suitable for large data sets - $\mathcal{O}(n^2 \log(n))$ time complexity.
+Affinity propagation | Automatically determines number of clusters. | Not suitable for large data sets - $\mathcal{O}(n^2 t)$ time complexity.
+Spectral clustering | Good performance. | See @Nadler2007-cg. Time complexity of $\mathcal{O}(n^3)$.
 
 ----
 
@@ -324,8 +314,8 @@ if __name__ == '__main__':
 
 ## Demonstration
 
+__TODO: Add image__
 
-
-# Thank-you for listening! | Any questions?
+# Thank you for listening! | Any questions?
 
 ## References {-}
