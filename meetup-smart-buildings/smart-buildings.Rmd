@@ -84,7 +84,7 @@ sensor_sample <- sample(unique(data$Sensor), 10)
 ## How does this work in practice?
 
 > - Vendor sets up a BMS. The BMS will behave in a certain way based predefined rules.
-> - BMS systems are costly to implement and to change. Can often require large amounts of recoding to tune the BMS's behaviour.
+> - BMS systems are costly to implement and to modify. Can require a lot of coding to change the BMS's behaviour.
 > - The bigger the BMS is the harder it is to find what matters. Locating problems is difficult and time-consuming.
 > - For example, a heating valve might be locked open. If this isn't detected the BMS will cool the room to reach required temperature.
 
