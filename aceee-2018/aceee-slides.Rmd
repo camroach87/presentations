@@ -1,13 +1,12 @@
 ---
 title: "Exploring unusual sensor behaviour in buildings using BMS data and unsupervised learning techniques"
-author: "Cameron Roach"
+author: "Cameron Roach (PhD candidate)"
 date: "31 July 2018"
 fontsize: 12pt
-#fig_width: 7/2
-#fig_height: 5/2
 output:
   beamer_presentation:
     theme: "metropolis"  # download from https://github.com/matze/mtheme
+    slide_level: 2
     includes:
       in_header: preamble.tex
 ---
@@ -159,7 +158,7 @@ Several algorithms tested:
 * spectral embedding (nearest neighbours affinity matrix)
 * spectral embedding (radial basis function affinity matrix)
 
-----
+## Dimensionality reduction
 
 ```{r plot-dr}
 scale <- function(x) {
@@ -178,7 +177,7 @@ dr_df %>%
   theme(aspect.ratio = 1)
 ```
 
-----
+## Dimensionality reduction
 
 ```{r}
 p1 <- dr_df %>%
@@ -209,7 +208,7 @@ p2 <- dr_df %>%
 
 
 \begincols
-  \begincol{.58\textwidth}
+  \begincol{.54\textwidth}
 
 ```{r plot-ts-ngram-all-2}
 grid.newpage()
@@ -218,7 +217,7 @@ grid.draw(rbind(ggplotGrob(p1), ggplotGrob(p2), size = "last"))
 
 
   \endcol
-\begincol{.38\textwidth}
+\begincol{.44\textwidth}
 
 Impact of different naming conventions between buildings.
 
@@ -235,10 +234,10 @@ Impact of different naming conventions between buildings.
 * affinity propagation
 * DBSCAN
 
-----
+## Clustering
 
 \begincols
-  \begincol{.58\textwidth}
+\begincol{.54\textwidth}
 
 ```{r plot-clusters}
 cl_df %>%
@@ -252,12 +251,14 @@ cl_df %>%
 ```
 
 
-  \endcol
-\begincol{.38\textwidth}
+\endcol
+\begincol{.44\textwidth}
 
-Here are clustering results!
+* Each clustering algorithm appears to offer similar performance.
+* t-SNE produces clear separation between clusters.
+* Similar measure types are clustered together.
 
-  \endcol
+\endcol
 \endcols
 
 
