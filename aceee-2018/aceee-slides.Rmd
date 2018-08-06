@@ -2,7 +2,7 @@
 title: "Exploring unusual sensor behaviour in buildings using BMS data and unsupervised learning techniques"
 author: "Cameron Roach (PhD candidate)"
 date: "31 July 2018"
-fontsize: 12pt
+fontsize: 10pt
 output:
   beamer_presentation:
     theme: "metropolis"  # download from https://github.com/matze/mtheme
@@ -13,9 +13,10 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo = FALSE
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
 )
-
 rm(list=ls())
 
 library(tidyverse)
@@ -76,30 +77,84 @@ for (iD in list.files(file.path(data_dir, "aceee-paper-data"))) {
 
 ## Overview
 
-1. Problem we wish to solve
-2. Techniques
-3. Some results
-4. Conclusions and future research directions
+1. Motivation
+2. Feature engineering
+3. Unsupervised learning techniques
+4. Results
+5. Concluding remarks
 
 
 ## Motivation
 
-* BMS data is available
+* Vendor sets up a BMS. The BMS will behave in a certain way based predefined rules.
+* BMS systems are costly to implement and to modify. Can require a lot of coding to change the BMS's behaviour.
+* The bigger the BMS is the harder it is to find what matters. Locating problems is difficult and time-consuming.
+* For example, a heating valve might be locked open. If this isn't detected the BMS will cool the room to reach the required temperature.
+* Help facility managers identify if a BMS is operating optimally.
 
-## Techniques
 
-* Engineering features
-  * time series
-  * metadata
-* Dimensionality reduction
-* Visualisation
-* Clustering
+## Data
+
+```{r meter-counts}
+bms_df <- read_csv(file.path(data_dir, 'bms_data/bms_data_tidy.csv'))
+
+bms_df %>% 
+  mutate(MEASURE_TYPE = substring(MEASURE_TYPE, 2)) %>% 
+  filter(METER_TYPE == 'AHU',
+         MEASURE_TYPE %in% unique(cl_df$MEASURE_TYPE)) %>% 
+  distinct(BUILDINGID, MEASURE_TYPE, UNIQUEID) %>% 
+  count(BUILDINGID, MEASURE_TYPE) %>% 
+  spread(BUILDINGID, n, fill = 0) %>% 
+  rename(`Measure Type` = MEASURE_TYPE) %>% 
+  knitr::kable()
+```
+
+<!-- ## Data -->
+
+<!-- ### Metadata -->
+
+<!-- ```{R} -->
+<!-- bms_df %>%  -->
+<!--   distinct(NAME) %>%  -->
+<!--   sample_n(5) -->
+<!-- ``` -->
+
 
 ## Engineering features
 
+### Metadata
+
+__TODO__ Don't have consistent descriptions of points within buildings or between buildings. However there are often some useful acronyms hidden within the names. We engineer text features that help us to find these useful bits of information.
+
+Character-level bigrams and trigrams are created for each BMS point's name. Whitespace and numeric values are omitted.
+
+For example, the first four bigrams of "NAE-08/FC-1.FD-88 AHU-14-1.AHU-14-1 VAV DMPR-POS" will be na, ae, ef and fc. The first four trigrams are nae, aef, efc and fcf.
+
+## Engineering features
+
+### Time series features
+
+__TODO__ in our case time series sampled at irregular intervals. Instead of interpolating raw time series (which might corrupt signal) we engineer global features that describe entire time series. These time series features include:
+
+* Number of unique values
+* Mean
+* Maximum value
+* Minimum value
+* Standard deviation
+* Skew
+* Kurtosis
+* Maximum change in value between readings
+* Minimum change in value between readings
+* Number of times the sensor readings cross the mean value.
+
+
+## Engineering features
 
 ```{r}
 sensor_sample_features <- unique(ts_df$Sensor)[c(2,33,250)]
+sensor_sample_features <- c("analog-input:3:VAV-L1-PE2-RmTemp:present-value",
+                            "analog-value:6:VAV-L2-PN2-SupAirDmpr:present-value",
+                            "analog-value:97:CH-R-2-kWr:present-value")
 
 p1 <- ts_df %>%
   filter(Sensor %in% sensor_sample_features) %>% 
@@ -128,7 +183,7 @@ p2 <- ts_df %>%
          Skewness = if_else(is.na(Skewness), 0, Skewness)) %>% 
   gather(Var, Value, -Sensor) %>% 
   group_by(Var) %>% 
-  # mutate(Value = (Value - median(Value))/IQR(Value)) %>% 
+  # mutate(Value = (Value - median(Value))/IQR(Value)) %>%  # scale
   ungroup() %>% 
   ggplot(aes(x=Var, y=Value, colour = Sensor)) +
   geom_col(width = 0) + 
@@ -147,16 +202,22 @@ grid.draw(cbind(ggplotGrob(p1), ggplotGrob(p2), size = "last"))
 
 
 
-## Dimensionality reduction
+## Unsupervised learning techniques
 
-Several algorithms tested:
+Approach the problem using dimensionality reduction and clustering.
+
+Several dimensionality reduction algorithms tested:
 
 * principal component analysis
 * sparse principal component analysis
 * isometric mapping
 * t-distributed stochastic neighbour embedding
 * spectral embedding (nearest neighbours affinity matrix)
-* spectral embedding (radial basis function affinity matrix)
+* spectral embedding (radial basis function affinity matrix).
+
+## t-distributed stochastic neighbour embedding
+
+T-SNE maps each data point to a location in a two or three dimensional space. It is well suited to visualising high dimensional spaces in two or three dimensions as it plots similar objects nearby and dissimilar objects far away with high probability. For certain tasks it has been shown to perform better than other dimension reduction approaches such as Isomap and Locally Linear Embedding.
 
 ## Dimensionality reduction
 
@@ -229,10 +290,12 @@ Impact of different naming conventions between buildings.
 
 ## Clustering
 
+Clustering was performed on lower dimensional space produced by t-SNE. Again, several methods were tested:
+
 * k-means
 * agglomerative clustering
 * affinity propagation
-* DBSCAN
+* DBSCAN.
 
 ## Clustering
 
@@ -255,8 +318,8 @@ cl_df %>%
 \begincol{.44\textwidth}
 
 * Each clustering algorithm appears to offer similar performance.
-* t-SNE produces clear separation between clusters.
-* Similar measure types are clustered together.
+* Possibly because t-SNE produces clear separation between clusters.
+* Similar BMS points are clustered together.
 
 \endcol
 \endcols
