@@ -1,11 +1,146 @@
 ---
-title: "ACEEE"
+title: "Exploring unusual sensor behaviour in buildings using BMS data and unsupervised learning techniques"
 author: "Cameron Roach"
 date: "31 July 2018"
-output: beamer_presentation
+fontsize: 12pt
+output:
+  beamer_presentation:
+    theme: "metropolis"  # download from https://github.com/matze/mtheme
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+
+rm(list=ls())
+
+library(tidyverse)
+library(lubridate)
+library(hms)
+require(e1071)
+library(gridExtra)
+
+ba_palette <- c("#3d6b78", "#60bb6b", "#d52f59", "#f5b835", "#2dbbd6",
+                "#816b93", "#b84f80", "#f08c3e", "#c1b97d", "#7e450a",
+                "#d4d700", "#00978f")
+ba_palette_ramp <- colorRampPalette(ba_palette)
+theme_set(theme_bw() +
+            theme(strip.background = element_blank()))
+ggplot <- function(...) {
+  ggplot2::ggplot(...) + 
+    scale_colour_manual(values = ba_palette) +
+    scale_fill_manual(values = ba_palette)
+}
+
+data_dir <- "/home/croach/Documents/data/bms/sensor_ts_presentation"
+
+ts_df <- read_csv(file.path(data_dir, "sensor_ts_presentation.csv")) %>% 
+  mutate(DT = as.POSIXct(time, origin="1970-01-01"),
+         Date = lubridate::date(DT),
+         Time = hms::hms(second(DT), minute(DT), hour(DT))) %>% 
+  select(-time) %>% 
+  rename(Value = value)
 ```
 
+## Overview
+
+1. Problem we wish to solve
+2. Techniques
+3. Some results
+4. Conclusions and future research directions
+
+
+## Motivation
+
+* BMS data is available
+
+## Techniques
+
+* Engineering features
+  * time series
+  * metadata
+* Dimensionality reduction
+* Visualisation
+* Clustering
+
+## Engineering features
+
+
+```{r}
+sensor_sample_features <- unique(ts_df$Sensor)[c(2,33,250)]
+
+p1 <- ts_df %>%
+  filter(Sensor %in% sensor_sample_features) %>% 
+  ggplot(aes(x = DT, y = Value, colour = Sensor)) +
+  geom_line() + 
+  facet_wrap(~Sensor, ncol = 1, scales = "free_y") +
+  labs(title = "Raw data",
+       x = "Date") +
+  theme(legend.position = "none")
+
+p2 <- ts_df %>%
+  filter(Sensor %in% sensor_sample_features) %>% 
+  group_by(Sensor) %>% 
+  arrange(DT) %>% 
+  mutate(above_mean = Value >= mean(Value, na.rm = TRUE),
+         mean_crossing = (above_mean & !lag(above_mean)) | 
+           (!above_mean & lag(above_mean))) %>% 
+  summarise(Mean = mean(Value, na.rm = TRUE),
+            `Standard deviation` = sd(Value, na.rm = TRUE),
+            Kurtosis = kurtosis(Value, na.rm = TRUE),
+            Skewness = skewness(Value, na.rm = TRUE),
+            `Max change` = abs(max(Value - lag(Value), na.rm = TRUE)),
+            `Min change` = abs(min(Value - lag(Value), na.rm = TRUE)),
+            `Mean crossings` = sum(mean_crossing, na.rm = TRUE)) %>%
+  mutate(Kurtosis = if_else(is.na(Kurtosis), 0, Kurtosis),
+         Skewness = if_else(is.na(Skewness), 0, Skewness)) %>% 
+  gather(Var, Value, -Sensor) %>% 
+  group_by(Var) %>% 
+  # mutate(Value = (Value - median(Value))/IQR(Value)) %>% 
+  ungroup() %>% 
+  ggplot(aes(x=Var, y=Value, colour = Sensor)) +
+  geom_col(width = 0) + 
+  geom_point() +
+  facet_wrap(~Sensor, ncol = 1) +
+  labs(title = "Feature generation",
+       x = NULL) +
+  theme(legend.position = "none") +
+  coord_flip()
+
+grid.arrange(p1, p2, nrow = 1)
+```
+
+
+
+
+## Dimensionality reduction
+
+Several algorithms tested:
+
+* principal component analysis
+* sparse principal component analysis
+* isometric mapping
+* t-distributed stochastic neighbour embedding
+* spectral embedding (nearest neighbours affinity matrix)
+* spectral embedding (radial basis function affinity matrix)
+
+## Clustering
+
+* k-means
+* agglomerative clustering
+* affinity propagation
+* DBSCAN
+
+
+## Visualising
+
+Dash demonstration
+
+
+## Conclusions
+
+
+## {.standout}
+
+Questions?
+
+## References {-}
