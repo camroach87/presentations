@@ -120,9 +120,9 @@ bms_df %>%
 <!-- ``` -->
 
 
-## Engineering features
+## Feature engineering
 
-### Metadata
+### Metadata features
 
 __TODO__ Don't have consistent descriptions of points within buildings or between buildings. However there are often some useful acronyms hidden within the names. We engineer text features that help us to find these useful bits of information.
 
@@ -130,7 +130,7 @@ Character-level bigrams and trigrams are created for each BMS point's name. Whit
 
 For example, the first four bigrams of "NAE-08/FC-1.FD-88 AHU-14-1.AHU-14-1 VAV DMPR-POS" will be na, ae, ef and fc. The first four trigrams are nae, aef, efc and fcf.
 
-## Engineering features
+## Feature engineering
 
 ### Time series features
 
@@ -143,12 +143,12 @@ __TODO__ in our case time series sampled at irregular intervals. Instead of inte
 * Standard deviation
 * Skew
 * Kurtosis
-* Maximum change in value between readings
-* Minimum change in value between readings
-* Number of times the sensor readings cross the mean value.
+* Maximum change
+* Minimum change
+* Number of mean crossings.
 
 
-## Engineering features
+## Feature engineering
 
 ```{r}
 sensor_sample_features <- unique(ts_df$Sensor)[c(2,33,250)]
@@ -215,9 +215,37 @@ Several dimensionality reduction algorithms tested:
 * spectral embedding (nearest neighbours affinity matrix)
 * spectral embedding (radial basis function affinity matrix).
 
+
+## Principal component analysis
+
+PCA is an unsupervised learning technique that has been used in various fault detection approaches (Kim and Katipamula 2017). Despite its popularity it does have some drawbacks that need to be considered. PCA focuses on producing orthogonal components that capture as much variation in the data as possible. It does not focus on preserving proximity relationships between points and neighbourhoods.
+
+
 ## t-distributed stochastic neighbour embedding
 
 T-SNE maps each data point to a location in a two or three dimensional space. It is well suited to visualising high dimensional spaces in two or three dimensions as it plots similar objects nearby and dissimilar objects far away with high probability. For certain tasks it has been shown to perform better than other dimension reduction approaches such as Isomap and Locally Linear Embedding.
+
+Drawbacks - computationally expensive, $T(n) = \mathcal{O}(n^2)$. In high dimensional settings may require a preliminary dimension reduction step by PCA.
+
+## Dimensionality reduction
+
+```{r plot-dr-no-colour}
+scale <- function(x) {
+  (x-min(x))/max(x-min(x))
+}
+
+dr_df %>% 
+  filter(Dataset == 'ts_ngram_similar') %>% 
+  group_by(DR_ALG) %>% 
+  mutate(x1 = scale(x1),
+         x2 = scale(x2)) %>% 
+  ggplot(aes(x=x1, y=x2)) +
+  #geom_jitter(width=0.02, height=0.02) +
+  geom_point() +
+  facet_wrap(~DR_ALG, nrow=2) +
+  labs(x='Component 1', y='Component 2', colour = "Measure Type") +
+  theme(aspect.ratio = 1)
+```
 
 ## Dimensionality reduction
 
@@ -232,7 +260,8 @@ dr_df %>%
   mutate(x1 = scale(x1),
          x2 = scale(x2)) %>% 
   ggplot(aes(x=x1, y=x2, colour=MEASURE_TYPE)) +
-  geom_jitter(width=0.02, height=0.02) +
+  # geom_jitter(width=0.02, height=0.02) +
+  geom_point() +
   facet_wrap(~DR_ALG, nrow=2) +
   labs(x='Component 1', y='Component 2', colour = "Measure Type") +
   theme(aspect.ratio = 1)
@@ -266,7 +295,7 @@ p2 <- dr_df %>%
   theme(aspect.ratio = 1)
 ```
 
-
+  
 
 \begincols
   \begincol{.54\textwidth}
@@ -319,18 +348,28 @@ cl_df %>%
 
 * Each clustering algorithm appears to offer similar performance.
 * Possibly because t-SNE produces clear separation between clusters.
-* Similar BMS points are clustered together.
+* Clustering on t-SNE is risky (see https://stats.stackexchange.com/questions/263539/clustering-on-the-output-of-t-sne) and so visualisation and exploration is preferred.
 
 \endcol
 \endcols
 
 
-## Visualising
+## {.standout}
 
-Dash demonstration
+Demonstration
+
+Ideas
+
+* When no points are labelled (only building colour) - identify points.
+* When points are labelled (colour by label) - check for outliers.
 
 
 ## Conclusions
+
+* Several dimensionality reduction algorithms are tested with t-SNE appearing to give the most useful two dimensional representation.
+* Our low dimensional space allows users to identify anomalous points either manually or automatically via a suitable clustering algorithm.
+* Implementation of the proposed methodology was also presented which allows users to rapidly examine many points for different equipment and measurement types.
+* Still need to overcome several challenges when incorporating several buildings at once when metadata differs.
 
 
 ## {.standout}
