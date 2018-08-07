@@ -309,7 +309,9 @@ grid.draw(rbind(ggplotGrob(p1), ggplotGrob(p2), size = "last"))
   \endcol
 \begincol{.44\textwidth}
 
-Impact of different naming conventions between buildings.
+* Different naming conventions between buildings can cause issues during dimensionality reduction.
+* The different clusters that are formed when metadata features are included separate buildings rather than sensor types.
+* Possible that using time series features only may be better.
 
   \endcol
 \endcols
