@@ -92,8 +92,16 @@ for (iD in list.files(file.path(data_dir, "aceee-paper-data"))) {
 * For example, a heating valve might be locked open. If this isn't detected the BMS will cool the room to reach the required temperature.
 * Help facility managers identify if a BMS is operating optimally.
 
+## Motivation
+
+Need an easy way to visualise and explore data.
+
+![Intended workflow](fig/anomaly_detection_flowchart.png)
+
 
 ## Data
+
+Focus on air-handling unit BMS data from three separate buildings.
 
 ```{r meter-counts}
 bms_df <- read_csv(file.path(data_dir, 'bms_data/bms_data_tidy.csv'))
@@ -106,18 +114,8 @@ bms_df %>%
   count(BUILDINGID, MEASURE_TYPE) %>% 
   spread(BUILDINGID, n, fill = 0) %>% 
   rename(`Measure Type` = MEASURE_TYPE) %>% 
-  knitr::kable()
+  knitr::kable(caption = "Number of points for each measurement type.")
 ```
-
-<!-- ## Data -->
-
-<!-- ### Metadata -->
-
-<!-- ```{R} -->
-<!-- bms_df %>%  -->
-<!--   distinct(NAME) %>%  -->
-<!--   sample_n(5) -->
-<!-- ``` -->
 
 
 ## Feature engineering
@@ -218,14 +216,23 @@ Several dimensionality reduction algorithms tested:
 
 ## Principal component analysis
 
-PCA is an unsupervised learning technique that has been used in various fault detection approaches (Kim and Katipamula 2017). Despite its popularity it does have some drawbacks that need to be considered. PCA focuses on producing orthogonal components that capture as much variation in the data as possible. It does not focus on preserving proximity relationships between points and neighbourhoods.
+* PCA is an unsupervised learning technique that has been used in various fault detection approaches.
+* Despite its popularity it does have some drawbacks that need to be considered.
+* PCA focuses on producing orthogonal components that capture as much variation in the data as possible.
+* It does not focus on preserving proximity relationships between points and neighbourhoods.
 
 
 ## t-distributed stochastic neighbour embedding
 
-T-SNE maps each data point to a location in a two or three dimensional space. It is well suited to visualising high dimensional spaces in two or three dimensions as it plots similar objects nearby and dissimilar objects far away with high probability. For certain tasks it has been shown to perform better than other dimension reduction approaches such as Isomap and Locally Linear Embedding.
+* t-SNE designed for visualising high-dimensional data in a low-dimensional space while preserving nearest neighbours. The algorithm maps each data point to a location in a two or three dimensional space.
+* Well suited to visualising high dimensional spaces in two or three dimensions as it plots similar objects nearby and dissimilar objects far away with high probability.
+* For certain tasks it has been shown to perform better than other dimension reduction approaches such as Isomap and Locally Linear Embedding.
 
 Drawbacks - computationally expensive, $T(n) = \mathcal{O}(n^2)$. In high dimensional settings may require a preliminary dimension reduction step by PCA.
+
+## t-distributed stochastic neighbour embedding
+
+
 
 ## Dimensionality reduction
 
@@ -355,6 +362,45 @@ cl_df %>%
 \endcol
 \endcols
 
+## Clustering
+
+<!-- ### Issues to be aware of -->
+
+<!-- * t-SNE preserves nearest neighbours -->
+
+```{r}
+library(Rtsne)
+
+sim_cluster <- function(n, cl, x_mean, y_mean) {
+  rerun(n, x = rnorm(1, x_mean), y = rnorm(1, y_mean), Class = cl) %>% 
+    bind_rows()
+}
+
+sim_cl_df <- sim_cluster(500, "A", -2, 0) %>% 
+  bind_rows(sim_cluster(1000, "B", 2, 0))
+
+sim_tsne <- Rtsne(sim_cl_df[, c("x", "y")], dims = 2, perplexity=20)
+
+sim_cl_df <- sim_cl_df %>% 
+  mutate(x_tsne = sim_tsne$Y[,1],
+         y_tsne = sim_tsne$Y[,2])
+
+sim_cl_df %>%
+  rownames_to_column() %>% 
+  gather(var, val, -c(rowname, Class)) %>% 
+  separate(var, c("X", "Data")) %>% 
+  mutate(Data = if_else(is.na(Data), "Raw", "t-SNE")) %>% 
+  spread(X, val) %>% 
+  select(-rowname) %>% 
+  # ggplot(aes(x = x, y = y, colour = Class)) +
+  ggplot(aes(x = x, y = y)) + 
+  geom_point() +
+  facet_wrap(~Data, nrow = 1, scales = "free") +
+  theme(legend.position = "bottom")
+```
+
+
+
 
 ## {.standout}
 
@@ -377,5 +423,3 @@ Ideas
 ## {.standout}
 
 Questions?
-
-## References {-}
