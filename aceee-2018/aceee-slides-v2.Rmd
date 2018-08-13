@@ -214,9 +214,10 @@ PCA is an unsupervised learning technique that has been used in various fault de
 
 ## t-distributed stochastic neighbour embedding
 
-t-SNE maps each data point to a location in a two or three dimensional space. It is well suited to visualising high dimensional spaces in two or three dimensions as it plots similar objects nearby and dissimilar objects far away with high probability. For certain tasks it has been shown to perform better than other dimension reduction approaches such as Isomap and Locally Linear Embedding.
-
-Drawbacks - computationally expensive, $T(n) = \mathcal{O}(n^2)$. In high dimensional settings may require a preliminary dimension reduction step by PCA.
+* t-SNE designed for visualising high-dimensional data in a low-dimensional space while preserving nearest neighbours. The algorithm maps each data point to a location in a two or three dimensional space.
+* Well suited to visualising high dimensional spaces in two or three dimensions as it plots similar objects nearby and dissimilar objects far away with high probability.
+* For certain tasks it has been shown to perform better than other dimension reduction approaches such as Isomap and Locally Linear Embedding.
+* Drawbacks - computationally expensive, $T(n) = \mathcal{O}(n^2)$. In high dimensional settings may require a preliminary dimension reduction step by PCA.
 
 ## Dimensionality reduction
 
