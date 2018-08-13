@@ -5,7 +5,7 @@ date: "31 July 2018"
 fontsize: 10pt
 output:
   beamer_presentation:
-    theme: "metropolis"  # download from https://github.com/matze/mtheme
+    # theme: "metropolis"  # download from https://github.com/matze/mtheme
     slide_level: 2
     includes:
       in_header: preamble.tex
@@ -91,6 +91,7 @@ for (iD in list.files(file.path(data_dir, "aceee-paper-data"))) {
 * The bigger the BMS is the harder it is to find what matters. Locating problems is difficult and time-consuming.
 * For example, a heating valve might be locked open. If this isn't detected the BMS will cool the room to reach the required temperature.
 * Help facility managers identify if a BMS is operating optimally.
+* Want to be able to compare and learn from multiple buildings.
 
 
 ## Data
@@ -109,22 +110,12 @@ bms_df %>%
   knitr::kable()
 ```
 
-<!-- ## Data -->
-
-<!-- ### Metadata -->
-
-<!-- ```{R} -->
-<!-- bms_df %>%  -->
-<!--   distinct(NAME) %>%  -->
-<!--   sample_n(5) -->
-<!-- ``` -->
-
 
 ## Feature engineering
 
 ### Metadata features
 
-__TODO__ Don't have consistent descriptions of points within buildings or between buildings. However there are often some useful acronyms hidden within the names. We engineer text features that help us to find these useful bits of information.
+Buildings have inconsistent point descriptions. However there are often some useful acronyms hidden within the names. We engineer text features that help us to find these useful bits of information.
 
 Character-level bigrams and trigrams are created for each BMS point's name. Whitespace and numeric values are omitted.
 
@@ -134,7 +125,7 @@ For example, the first four bigrams of "NAE-08/FC-1.FD-88 AHU-14-1.AHU-14-1 VAV 
 
 ### Time series features
 
-__TODO__ in our case time series sampled at irregular intervals. Instead of interpolating raw time series (which might corrupt signal) we engineer global features that describe entire time series. These time series features include:
+Time series sampled at irregular intervals. Instead of interpolating raw time series (which might corrupt signal) we engineer global features that describe entire time series. These time series features include:
 
 * Number of unique values
 * Mean
@@ -223,7 +214,7 @@ PCA is an unsupervised learning technique that has been used in various fault de
 
 ## t-distributed stochastic neighbour embedding
 
-T-SNE maps each data point to a location in a two or three dimensional space. It is well suited to visualising high dimensional spaces in two or three dimensions as it plots similar objects nearby and dissimilar objects far away with high probability. For certain tasks it has been shown to perform better than other dimension reduction approaches such as Isomap and Locally Linear Embedding.
+t-SNE maps each data point to a location in a two or three dimensional space. It is well suited to visualising high dimensional spaces in two or three dimensions as it plots similar objects nearby and dissimilar objects far away with high probability. For certain tasks it has been shown to perform better than other dimension reduction approaches such as Isomap and Locally Linear Embedding.
 
 Drawbacks - computationally expensive, $T(n) = \mathcal{O}(n^2)$. In high dimensional settings may require a preliminary dimension reduction step by PCA.
 
