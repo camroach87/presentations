@@ -26,6 +26,8 @@ require(e1071)
 # library(gridExtra)
 library(grid)
 
+set.seed(1)
+
 ba_palette <- c("#3d6b78", "#60bb6b", "#d52f59", "#f5b835", "#2dbbd6",
                 "#816b93", "#b84f80", "#f08c3e", "#c1b97d", "#7e450a",
                 "#d4d700", "#00978f")
@@ -47,7 +49,10 @@ ts_df <- read_csv(file.path(data_dir, "sensor_ts_presentation/sensor_ts_presenta
          Date = lubridate::date(DT),
          Time = hms::hms(second(DT), minute(DT), hour(DT))) %>% 
   select(-time) %>% 
-  rename(Value = value)
+  rename(Value = value) %>% 
+  group_by(Sensor) %>% 
+  filter(sd(Value, na.rm = TRUE) != 0) %>% 
+  ungroup()
 
 # Clustering and dimension reduction data from python
 dr_df = NULL
@@ -100,10 +105,49 @@ Need an easy way to visualise and explore data.
 
 ![Intended workflow](fig/anomaly_detection_flowchart.png)
 
+## Motivation
 
-## Data
+```{r}
+plot_overlaid_ts <- function(n, scale = FALSE) {
+  plot_df <- ts_df %>% 
+    filter(Sensor %in% sample(Sensor, n))
+    
+    if (scale) {
+      plot_df <- plot_df %>% 
+        group_by(Sensor) %>% 
+        mutate(Value = (Value - min(Value))/(max(Value)-min(Value)))
+    }
+  
+  plot_df %>% 
+    ggplot(aes(x = DT, y = Value, group = Sensor)) + 
+    geom_line()
+}
 
-Focus on AHU data from three separate buildings.
+plot_overlaid_ts(1)
+```
+
+
+## Motivation
+
+```{r}
+plot_overlaid_ts(10)
+```
+
+
+## Motivation
+
+```{r}
+plot_overlaid_ts(100, TRUE)
+```
+
+
+## Feature engineering
+
+### Data
+
+Focus on 597 AHU points from three separate buildings.
+
+\small
 
 ```{r meter-counts}
 bms_df <- read_csv(file.path(data_dir, 'bms_data/bms_data_tidy.csv'))
@@ -135,6 +179,7 @@ bms_df %>%
   knitr::kable(caption = "Number of points for each measurement type.")
 ```
 
+\normalsize
 
 ## Feature engineering
 
@@ -148,7 +193,7 @@ bms_df %>%
 
 ### Time series features
 
-Time series sampled at irregular intervals. Instead of interpolating raw time series (which might corrupt signal) we engineer global features that describe entire time series. These time series features include:
+Time series sampled at irregular intervals. Instead of interpolating raw time series (which can corrupt signal) we engineer global features that describe entire time series. These time series features include:
 
 * Number of unique values
 * Mean
@@ -222,8 +267,13 @@ Approach the problem using dimensionality reduction and clustering.
 
 Several dimensionality reduction algorithms tested:
 
+Linear:
+
 * principal component analysis
 * sparse principal component analysis
+
+Non-linear (manifold learning):
+
 * isometric mapping
 * t-distributed stochastic neighbour embedding
 * spectral embedding (nearest neighbours affinity matrix)
@@ -246,7 +296,7 @@ Several dimensionality reduction algorithms tested:
 
 Drawbacks
 
-* Computationally expensive, $T(n) = \mathcal{O}(n^2)$. In high dimensional settings may require a preliminary dimension reduction step by PCA.
+* More computationally expensive, $T(N, d) = \mathcal{O}(d N\log(N))$ (Barnes-Hut).
 * Can overfit - but that's ok if we're visualising.
 
 
@@ -385,11 +435,11 @@ cl_df %>%
 
 ## Examples
 
-!["Control valve short cycling."](fig/ex1.png)
+![Control valve short cycling.](fig/ex1.png)
 
 ## Examples
 
-!["?"](fig/ex2.png)
+![?](fig/ex2.png)
 
 
 ## Conclusions
@@ -405,10 +455,12 @@ cl_df %>%
 Questions?
 
 
-## t-SNE overfitting
+## Clustering with t-SNE
 
 ```{r}
 library(Rtsne)
+
+set.seed(5)
 
 sim_cluster <- function(n, cl, x_mean, y_mean) {
   rerun(n, x = rnorm(1, x_mean), y = rnorm(1, y_mean), Class = cl) %>% 
@@ -431,14 +483,13 @@ sim_cl_df %>%
   mutate(Data = if_else(is.na(Data), "Raw", "t-SNE")) %>% 
   spread(X, val) %>% 
   select(-rowname) %>% 
-  # ggplot(aes(x = x, y = y, colour = Class)) +
   ggplot(aes(x = x, y = y)) + 
   geom_point() +
   facet_wrap(~Data, nrow = 1, scales = "free") +
   theme(legend.position = "bottom")
 ```
 
-## t-SNE overfitting
+## Clustering with t-SNE
 
 ```{r}
 sim_cl_df %>%
