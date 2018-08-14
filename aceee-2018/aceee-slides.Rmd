@@ -92,7 +92,7 @@ for (iD in list.files(file.path(data_dir, "aceee-paper-data"))) {
 
 ## Motivation
 
-* The bigger the BMS is the harder it is to find what matters. Locating problems is difficult and time-consuming.
+* The bigger the BMS the harder it is to find what matters. Locating problems is difficult and time-consuming.
 * Help engineers explore unusual BMS behaviour.
 * Compare and learn from multiple buildings.
 
@@ -409,7 +409,7 @@ grid.draw(rbind(ggplotGrob(p1), ggplotGrob(p2), size = "last"))
 * Introduce calculated time series, e.g., SAT - SATSP. View relationships between points.
 * Instead of comparing points, compare point histories day by day.
 * Need to pick the right tool for the job when visualising or clustering data.
-* May speed up the process of sorting through and labelling BMS data sets.
+* Speeds up the process of exploring BMS data sets.
 
 [reflection notes]: (
 - build up databases of faults quickly and easily, observe in real time see if points are moving around. can quickly check time series of many points, detect mislabelled points
