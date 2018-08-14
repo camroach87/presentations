@@ -5,7 +5,7 @@ date: "31 July 2018"
 fontsize: 10pt
 output:
   beamer_presentation:
-    # theme: "metropolis"  # download from https://github.com/matze/mtheme
+    theme: "metropolis"  # download from https://github.com/matze/mtheme
     slide_level: 2
     includes:
       in_header: preamble.tex
@@ -38,7 +38,8 @@ ggplot <- function(...) {
     scale_fill_manual(values = ba_palette)
 }
 
-data_dir <- "/home/croach/Documents/data/bms"
+# data_dir <- "/home/croach/Documents/data/bms"
+data_dir <- "/Users/cameronroach/Google Drive/data/bms"
 
 # Raw sensor time series data
 ts_df <- read_csv(file.path(data_dir, "sensor_ts_presentation/sensor_ts_presentation.csv")) %>% 
@@ -102,10 +103,25 @@ Need an easy way to visualise and explore data.
 
 ## Data
 
-Focus on air-handling unit BMS data from three separate buildings.
+Focus on AHU data from three separate buildings.
 
 ```{r meter-counts}
 bms_df <- read_csv(file.path(data_dir, 'bms_data/bms_data_tidy.csv'))
+
+measure_lkp <- tribble(
+  ~MEASURE_TYPE, ~Measure,
+  "CCV", "Cooling control valve (CCV)",
+  "ECD", "Economy cycle dampers (ECD)",
+  "ENB", "Enabled (ENB)",
+  "RAT", "Return air temperature (RAT)",
+  "SAPR", "Supply air pressure (SAPR)",
+  "SAPRSP", "Supply air pressure setpoint (SAPRSP)",
+  "SAT", "Supply air temperature (SAT)",
+  "SATSP", "Supply air temperature setpoint (SATSP)",
+  "SPD", "Speed (SPD)",
+  "STS", "Status (STS)",
+  "VAVDM", "VAV damper position max (VAVDM)"
+)
 
 bms_df %>% 
   mutate(MEASURE_TYPE = substring(MEASURE_TYPE, 2)) %>% 
@@ -114,7 +130,8 @@ bms_df %>%
   distinct(BUILDINGID, MEASURE_TYPE, UNIQUEID) %>% 
   count(BUILDINGID, MEASURE_TYPE) %>% 
   spread(BUILDINGID, n, fill = 0) %>% 
-  rename(`Measure Type` = MEASURE_TYPE) %>% 
+  inner_join(measure_lkp) %>% 
+  select(Measure, starts_with("BID")) %>% 
   knitr::kable(caption = "Number of points for each measurement type.")
 ```
 
@@ -123,11 +140,9 @@ bms_df %>%
 
 ### Metadata features
 
-Buildings have inconsistent point descriptions. However there are often some useful acronyms hidden within the names. We engineer text features that help us to find these useful bits of information.
-
-Character-level bigrams and trigrams are created for each BMS point's name. Whitespace and numeric values are omitted.
-
-For example, the first four bigrams of "NAE-08/FC-1.FD-88 AHU-14-1.AHU-14-1 VAV DMPR-POS" will be na, ae, ef and fc. The first four trigrams are nae, aef, efc and fcf.
+* Buildings have inconsistent point descriptions. However there are often some useful acronyms hidden within the names.
+* Character-level bigrams and trigrams are created for each BMS point's name. Whitespace and numeric values are omitted.
+* For example, the first four bigrams of "NAE-08/FC-1.FD-88 AHU-14-1.AHU-14-1 VAV DMPR-POS" will be na, ae, ef and fc. The first four trigrams are nae, aef, efc and fcf.
 
 ## Feature engineering
 
@@ -229,9 +244,10 @@ Several dimensionality reduction algorithms tested:
 * Well suited to visualising high dimensional spaces in two or three dimensions as it plots similar objects nearby and dissimilar objects far away with high probability.
 * For certain tasks it has been shown to perform better than other dimension reduction approaches such as Isomap and Locally Linear Embedding.
 
-Drawbacks - computationally expensive, $T(n) = \mathcal{O}(n^2)$. In high dimensional settings may require a preliminary dimension reduction step by PCA.
+Drawbacks
 
-## t-distributed stochastic neighbour embedding
+* Computationally expensive, $T(n) = \mathcal{O}(n^2)$. In high dimensional settings may require a preliminary dimension reduction step by PCA.
+* Can overfit - but that's ok if we're visualising.
 
 
 
@@ -358,16 +374,38 @@ cl_df %>%
 
 * Each clustering algorithm appears to offer similar performance.
 * Possibly because t-SNE produces clear separation between clusters.
-* Clustering on t-SNE is risky (see https://stats.stackexchange.com/questions/263539/clustering-on-the-output-of-t-sne) and so visualisation and exploration is preferred.
+* Clustering on t-SNE is risky and so visualisation and exploration is preferred.
 
 \endcol
 \endcols
 
-## Clustering
 
-<!-- ### Issues to be aware of -->
 
-<!-- * t-SNE preserves nearest neighbours -->
+
+
+## Examples
+
+![](fig/ex1.png)
+
+## Examples
+
+![](fig/ex2.png)
+
+
+## Conclusions
+
+* Several dimensionality reduction algorithms are tested with t-SNE appearing to give the most useful two dimensional representation.
+* Our low dimensional space allows users to identify anomalous points either manually or automatically via a suitable clustering algorithm.
+* Implementation of the proposed methodology was also presented which allows users to rapidly examine many points for different equipment and measurement types.
+* Still need to overcome several challenges when incorporating several buildings at once when metadata differs.
+
+
+## {.standout}
+
+Questions?
+
+
+## t-SNE overfitting
 
 ```{r}
 library(Rtsne)
@@ -400,27 +438,19 @@ sim_cl_df %>%
   theme(legend.position = "bottom")
 ```
 
+## t-SNE overfitting
 
+```{r}
+sim_cl_df %>%
+  rownames_to_column() %>% 
+  gather(var, val, -c(rowname, Class)) %>% 
+  separate(var, c("X", "Data")) %>% 
+  mutate(Data = if_else(is.na(Data), "Raw", "t-SNE")) %>% 
+  spread(X, val) %>% 
+  select(-rowname) %>% 
+  ggplot(aes(x = x, y = y, colour = Class)) +
+  geom_point() +
+  facet_wrap(~Data, nrow = 1, scales = "free") +
+  theme(legend.position = "bottom")
+```
 
-
-## {.standout}
-
-Demonstration
-
-Ideas
-
-* When no points are labelled (only building colour) - identify points.
-* When points are labelled (colour by label) - check for outliers.
-
-
-## Conclusions
-
-* Several dimensionality reduction algorithms are tested with t-SNE appearing to give the most useful two dimensional representation.
-* Our low dimensional space allows users to identify anomalous points either manually or automatically via a suitable clustering algorithm.
-* Implementation of the proposed methodology was also presented which allows users to rapidly examine many points for different equipment and measurement types.
-* Still need to overcome several challenges when incorporating several buildings at once when metadata differs.
-
-
-## {.standout}
-
-Questions?
