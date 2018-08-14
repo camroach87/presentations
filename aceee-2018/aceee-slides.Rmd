@@ -86,18 +86,19 @@ for (iD in list.files(file.path(data_dir, "aceee-paper-data"))) {
 1. Motivation
 2. Feature engineering
 3. Unsupervised learning techniques
-4. Results
-5. Concluding remarks
+4. Examples
+5. Thoughts and reflections
 
 
 ## Motivation
 
-* Vendor sets up a BMS. The BMS will behave in a certain way based predefined rules.
-* BMS systems are costly to implement and to modify. Can require a lot of coding to change the BMS's behaviour.
 * The bigger the BMS is the harder it is to find what matters. Locating problems is difficult and time-consuming.
-* For example, a heating valve might be locked open. If this isn't detected the BMS will cool the room to reach the required temperature.
-* Help facility managers identify if a BMS is operating optimally.
-* Want to be able to compare and learn from multiple buildings.
+* Help engineers explore unusual BMS behaviour.
+* Compare and learn from multiple buildings.
+
+[//]: (
+- For example, a heating valve might be locked open. If this isn't detected the BMS will cool the room to reach the required temperature.
+)
 
 ## Motivation
 
@@ -265,14 +266,12 @@ grid.draw(cbind(ggplotGrob(p1), ggplotGrob(p2), size = "last"))
 
 Approach the problem using dimensionality reduction and clustering.
 
-Several dimensionality reduction algorithms tested:
-
-Linear:
+Linear projections:
 
 * principal component analysis
 * sparse principal component analysis
 
-Non-linear (manifold learning):
+Non-linear projections (manifold learning):
 
 * isometric mapping
 * t-distributed stochastic neighbour embedding
@@ -285,20 +284,24 @@ Non-linear (manifold learning):
 * PCA is an unsupervised learning technique that has been used in various fault detection approaches.
 * Despite its popularity it does have some drawbacks that need to be considered.
 * PCA focuses on producing orthogonal components that capture as much variation in the data as possible.
-* It does not focus on preserving proximity relationships between points and neighbourhoods.
+
+Drawbacks:
+
+* Does not aim to preserve proximity relationships between points and neighbourhoods.
 
 
 ## t-distributed stochastic neighbour embedding
 
-* t-SNE designed for visualising high-dimensional data in a low-dimensional space while preserving nearest neighbours. The algorithm maps each data point to a location in a two or three dimensional space.
+* t-SNE attempts to preserve nearest neighbours.
 * Well suited to visualising high dimensional spaces in two or three dimensions as it plots similar objects nearby and dissimilar objects far away with high probability.
-* For certain tasks it has been shown to perform better than other dimension reduction approaches such as Isomap and Locally Linear Embedding.
 
-Drawbacks
+[Performance]: (Better than other dimension reduction approaches such as Isomap and Locally Linear Embedding.)
+[How it works]: (Calculates similarities between points in high and low-dimensional spaces and then minimises the Kullback Leibler divergence of the low-dimensional distribution to the high.)
 
-* More computationally expensive, $T(N, d) = \mathcal{O}(d N\log(N))$ (Barnes-Hut).
-* Can overfit - but that's ok if we're visualising.
+Drawbacks:
 
+* $T_{t-SNE}(N) = \mathcal{O}(N\log(N))$ (Barnes-Hut) whereas $T_{PCA}(N) = \mathcal{O}(N)$.
+* Doesn't preserve distance or density. Don't use distance or density based clustering algorithms after t-SNE!
 
 
 ## Dimensionality reduction
@@ -383,15 +386,42 @@ grid.draw(rbind(ggplotGrob(p1), ggplotGrob(p2), size = "last"))
   \endcol
 \begincol{.44\textwidth}
 
-* Different naming conventions between buildings can cause issues during dimensionality reduction.
-* The different clusters that are formed when metadata features are included separate buildings rather than sensor types.
-* Possible that using time series features only may be better.
+* Different naming conventions between buildings can cause issues.
+* Clusters may represent buildings rather than sensor types.
+* Possible that only using time series features may be better.
 
   \endcol
 \endcols
 
 
+## Examples
 
+![Control valve short cycling.](fig/ex1.png)
+
+## Examples
+
+![Cooling control valve only open for two hours.](fig/ex2.png)
+
+
+## Thoughts and reflections
+
+* Futher work needs to be done selecting appropriate metadata and time series features.
+* Introduce calculated time series, e.g., SAT - SATSP. View relationships between points.
+* Instead of comparing points, compare point histories day by day.
+* Need to pick the right tool for the job when visualising or clustering data.
+* May speed up the process of sorting through and labelling BMS data sets.
+
+[reflection notes]: (
+- build up databases of faults quickly and easily, observe in real time see if points are moving around. can quickly check time series of many points, detect mislabelled points
+- n-grams maybe not the way to go - just run a regex expression to find certain phrases and create dummy variables?
+- time series features based on business hours/non-business hours vs entire time series
+- people using tools like this will need some training, but much easier than manually looking at every single time series and releationship. 
+)
+
+
+## {.standout}
+
+Questions?
 
 ## Clustering
 
@@ -430,32 +460,7 @@ cl_df %>%
 \endcols
 
 
-
-
-
-## Examples
-
-![Control valve short cycling.](fig/ex1.png)
-
-## Examples
-
-![?](fig/ex2.png)
-
-
-## Conclusions
-
-* Several dimensionality reduction algorithms are tested with t-SNE appearing to give the most useful two dimensional representation.
-* Our low dimensional space allows users to identify anomalous points either manually or automatically via a suitable clustering algorithm.
-* Implementation of the proposed methodology was also presented which allows users to rapidly examine many points for different equipment and measurement types.
-* Still need to overcome several challenges when incorporating several buildings at once when metadata differs.
-
-
-## {.standout}
-
-Questions?
-
-
-## Clustering with t-SNE
+## Clustering after t-SNE
 
 ```{r}
 library(Rtsne)
@@ -489,7 +494,7 @@ sim_cl_df %>%
   theme(legend.position = "bottom")
 ```
 
-## Clustering with t-SNE
+## Clustering after t-SNE
 
 ```{r}
 sim_cl_df %>%
