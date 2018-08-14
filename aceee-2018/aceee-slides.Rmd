@@ -385,11 +385,11 @@ cl_df %>%
 
 ## Examples
 
-![](fig/ex1.png)
+!["Control valve short cycling."](fig/ex1.png)
 
 ## Examples
 
-![](fig/ex2.png)
+!["?"](fig/ex2.png)
 
 
 ## Conclusions
