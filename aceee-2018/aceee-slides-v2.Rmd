@@ -5,7 +5,7 @@ date: "31 July 2018"
 fontsize: 10pt
 output:
   beamer_presentation:
-    # theme: "metropolis"  # download from https://github.com/matze/mtheme
+    theme: "metropolis"  # download from https://github.com/matze/mtheme
     slide_level: 2
     includes:
       in_header: preamble.tex
@@ -38,7 +38,8 @@ ggplot <- function(...) {
     scale_fill_manual(values = ba_palette)
 }
 
-data_dir <- "/home/croach/Documents/data/bms"
+# data_dir <- "/home/croach/Documents/data/bms"
+data_dir <- "/Users/cameronroach/Google Drive/data/bms"
 
 # Raw sensor time series data
 ts_df <- read_csv(file.path(data_dir, "sensor_ts_presentation/sensor_ts_presentation.csv")) %>% 
