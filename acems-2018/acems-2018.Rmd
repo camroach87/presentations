@@ -118,11 +118,10 @@ where $\beta_h$ is the coefficient for predictor $x_{hij}$, $u_{0j}$ is the rand
 
 ### Estimating energy profiles
 
-Consider attribute $h$ for building $j$ changing from false to true. Let $q_{0.5} \left( Y | X \right)$ be the conditional median of $Y$ on $X$. Then,
+Consider attribute $h$ for building $j$ changing from false to true. Then we can use the approximation
 
 $$
-q_{0.5} \left( Y_{ij} | X_{hij} = 1 \right)
-\approx q_{0.5} \left( Y_{ij} | X_{hij} =  0 \right) e^{\beta_h}.
+Y_{ij} |_{X_{hij} = 1} \approx (Y_{ij} |_{X_{hij} = 0}) e^{\beta_h}
 $$
 
 
@@ -134,7 +133,7 @@ $$
 <!-- \end{gathered} -->
 <!-- $$ -->
 
-Calculating the median demand using this formula gives our profile plots. The values $e^{\beta_h}$ can be interpreted as the percentage change when $X_{hij}$ changes value from false to true.
+The values $e^{\beta_h}$ can be interpreted as the percentage change when $X_{hij}$ changes value from false to true.
 
 
 ## Model selection
@@ -178,8 +177,6 @@ Simulation studies have found that full-model averaging can help to reduce probl
 -----------
 
 Given a candidate set of $R$ models our coefficients $\beta_h$ are estimated by full model averaging:
-
-__TODO:__ Check quantile properties, or show the approximation for log is ok.
 
 $$
 \hat{\bar{\beta_h}} = \sum^R_{i=1} w_i \hat{\beta}_{hi},
