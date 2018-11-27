@@ -59,7 +59,7 @@ gefcom_dir <- "./../../../papers/gefcom-2017/cache/" # knitr
 
 We want to understand which building characteristics influence energy demand and quantify the expected energy consumption.
 
-Work with smart meter and characteristic data for 99 commercial buildings across Australia.
+Work with smart meter and characteristic data for 129 commercial buildings across Australia.
 
 3 years 15-minute meter data available.
 
@@ -118,22 +118,19 @@ where $\beta_h$ is the coefficient for predictor $x_{hij}$, $u_{0j}$ is the rand
 
 ### Estimating energy profiles
 
-Consider attribute $h$ for building $j$ changing from false to true. Then we can use the approximation
+We use the estimator proposed by @Kennedy1981-xu to calculate the proportional impact, $p_h$ of $X_{hij}$ on the dependent variable $Y_{ij}$. Kennedy's estimator is consistent and almost unbiased [@Giles2011-cv]. For a dummy variable changing from zero to one the estimator is given by
 
 $$
-Y_{ij} |_{X_{hij} = 1} \approx (Y_{ij} |_{X_{hij} = 0}) e^{\beta_h}
+\hat{p}_h = e^{ \hat{ \bar{\beta}}_h - 0.5 \widehat{ \text{ase}}\left( \hat{ \bar{\beta}}_h \right)^2} - 1.
 $$
 
+As this is the proportional impact we can rewrite the above expression in terms of our response variable to obtain
 
-<!-- $$ -->
-<!-- \begin{gathered} -->
-<!-- q_{0.5} \left( \log Y_{ij} | X_{hij} = 1 \right) - q_{0.5} \left( \log Y_{ij} | X_{hij} = 0 \right) = \beta_h \\ -->
-<!-- \Rightarrow q_{0.5} \left( Y_{ij} | X_{hij} = 1 \right) -->
-<!-- \approx q_{0.5} \left( Y_{ij} | X_{hij} =  0 \right) e^{\beta_h}. -->
-<!-- \end{gathered} -->
-<!-- $$ -->
+$$
+Y_{ij}^* = e^{ \hat{ \bar{\beta}}_h - 0.5 \widehat{ \text{ase}}\left( \hat{ \bar{\beta}}_h \right)^2} \mathbb{E} \left[ Y_{ij} | X_{hij} =  0 \right],
+$$
 
-The values $e^{\beta_h}$ can be interpreted as the percentage change when $X_{hij}$ changes value from false to true.
+where $Y_{ij}^*$ is the new demand value after our Boolean variable has changed from false to true.
 
 
 ## Model selection
