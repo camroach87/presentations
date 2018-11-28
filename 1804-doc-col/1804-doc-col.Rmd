@@ -1,7 +1,8 @@
 ---
-title: "Exploring unusual sensor behaviour in buildings using BMS data and unsupervised learning techniques"
+title: "Monash Doctoral Colloquium"
+subtitle: "Exploring unusual sensor behaviour in buildings using BMS data and unsupervised learning techniques"
 author: "Cameron Roach (PhD candidate)"
-date: "31 July 2018"
+date: "28 November 2018"
 fontsize: 10pt
 output:
   beamer_presentation:
@@ -41,7 +42,7 @@ ggplot <- function(...) {
 }
 
 # data_dir <- "/home/croach/Documents/data/bms"
-data_dir <- "/Users/cameronroach/Google Drive/data/bms"
+data_dir <- "/Volumes/MicroSD/data_main/bms"
 
 # Raw sensor time series data
 ts_df <- read_csv(file.path(data_dir, "sensor_ts_presentation/sensor_ts_presentation.csv")) %>% 
@@ -295,8 +296,8 @@ Drawbacks:
 * t-SNE attempts to preserve nearest neighbours.
 * Well suited to visualising high dimensional spaces in two or three dimensions as it plots similar objects nearby and dissimilar objects far away with high probability.
 
-[Performance]: (Better than other dimension reduction approaches such as Isomap and Locally Linear Embedding.)
-[How it works]: (Calculates similarities between points in high and low-dimensional spaces and then minimises the Kullback Leibler divergence of the low-dimensional distribution to the high.)
+<!-- [Performance]: (Better than other dimension reduction approaches such as Isomap and Locally Linear Embedding.) -->
+<!-- [How it works]: (Calculates similarities between points in high and low-dimensional spaces and then minimises the Kullback Leibler divergence of the low-dimensional distribution to the high.) -->
 
 Drawbacks:
 
@@ -346,6 +347,12 @@ dr_df %>%
 
 ## Dimensionality reduction
 
+* Different naming conventions between buildings can cause issues.
+* Clusters may represent buildings rather than sensor types.
+* Possible that only using time series features may be better.
+
+----
+
 ```{r}
 p1 <- dr_df %>%
   filter(DR_ALG == 't-SNE',
@@ -372,26 +379,11 @@ p2 <- dr_df %>%
   theme(aspect.ratio = 1)
 ```
 
-  
-
-\begincols
-  \begincol{.54\textwidth}
-
-```{r plot-ts-ngram-all-2}
+```{r plot-ts-ngram-all-2, fig.align="center"}
 grid.newpage()
 grid.draw(rbind(ggplotGrob(p1), ggplotGrob(p2), size = "last"))
 ```
 
-
-  \endcol
-\begincol{.44\textwidth}
-
-* Different naming conventions between buildings can cause issues.
-* Clusters may represent buildings rather than sensor types.
-* Possible that only using time series features may be better.
-
-  \endcol
-\endcols
 
 
 ## Examples
@@ -411,102 +403,14 @@ grid.draw(rbind(ggplotGrob(p1), ggplotGrob(p2), size = "last"))
 * Need to pick the right tool for the job when visualising or clustering data.
 * Speeds up the process of exploring BMS data sets.
 
-[reflection notes]: (
-- build up databases of faults quickly and easily, observe in real time see if points are moving around. can quickly check time series of many points, detect mislabelled points
-- n-grams maybe not the way to go - just run a regex expression to find certain phrases and create dummy variables?
-- time series features based on business hours/non-business hours vs entire time series
-- people using tools like this will need some training, but much easier than manually looking at every single time series and releationship. 
-)
+<!-- [reflection notes]: ( -->
+<!-- - build up databases of faults quickly and easily, observe in real time see if points are moving around. can quickly check time series of many points, detect mislabelled points -->
+<!-- - n-grams maybe not the way to go - just run a regex expression to find certain phrases and create dummy variables? -->
+<!-- - time series features based on business hours/non-business hours vs entire time series -->
+<!-- - people using tools like this will need some training, but much easier than manually looking at every single time series and releationship.  -->
+<!-- ) -->
 
 
 ## {.standout}
 
 Questions?
-
-## Clustering
-
-Clustering was performed on lower dimensional space produced by t-SNE. Again, several methods were tested:
-
-* k-means
-* agglomerative clustering
-* affinity propagation
-* DBSCAN.
-
-## Clustering
-
-\begincols
-\begincol{.54\textwidth}
-
-```{r plot-clusters}
-cl_df %>%
-  filter(Dataset == 'ts_ngram_similar') %>%
-  ggplot(aes(x=x1, y=x2, colour=factor(CLUSTER))) +
-  geom_point() +
-  facet_wrap(~CL_ALG) +
-  labs(x='Component 1', y='Component 2', colour="Cluster") +
-  theme(aspect.ratio = 1,
-        legend.position='none')
-```
-
-
-\endcol
-\begincol{.44\textwidth}
-
-* Each clustering algorithm appears to offer similar performance.
-* Possibly because t-SNE produces clear separation between clusters.
-* Clustering on t-SNE is risky and so visualisation and exploration is preferred.
-
-\endcol
-\endcols
-
-
-## Clustering after t-SNE
-
-```{r}
-library(Rtsne)
-
-set.seed(5)
-
-sim_cluster <- function(n, cl, x_mean, y_mean) {
-  rerun(n, x = rnorm(1, x_mean), y = rnorm(1, y_mean), Class = cl) %>% 
-    bind_rows()
-}
-
-sim_cl_df <- sim_cluster(500, "A", -2, 0) %>% 
-  bind_rows(sim_cluster(1000, "B", 2, 0))
-
-sim_tsne <- Rtsne(sim_cl_df[, c("x", "y")], dims = 2, perplexity=20)
-
-sim_cl_df <- sim_cl_df %>% 
-  mutate(x_tsne = sim_tsne$Y[,1],
-         y_tsne = sim_tsne$Y[,2])
-
-sim_cl_df %>%
-  rownames_to_column() %>% 
-  gather(var, val, -c(rowname, Class)) %>% 
-  separate(var, c("X", "Data")) %>% 
-  mutate(Data = if_else(is.na(Data), "Raw", "t-SNE")) %>% 
-  spread(X, val) %>% 
-  select(-rowname) %>% 
-  ggplot(aes(x = x, y = y)) + 
-  geom_point() +
-  facet_wrap(~Data, nrow = 1, scales = "free") +
-  theme(legend.position = "bottom")
-```
-
-## Clustering after t-SNE
-
-```{r}
-sim_cl_df %>%
-  rownames_to_column() %>% 
-  gather(var, val, -c(rowname, Class)) %>% 
-  separate(var, c("X", "Data")) %>% 
-  mutate(Data = if_else(is.na(Data), "Raw", "t-SNE")) %>% 
-  spread(X, val) %>% 
-  select(-rowname) %>% 
-  ggplot(aes(x = x, y = y, colour = Class)) +
-  geom_point() +
-  facet_wrap(~Data, nrow = 1, scales = "free") +
-  theme(legend.position = "bottom")
-```
-
