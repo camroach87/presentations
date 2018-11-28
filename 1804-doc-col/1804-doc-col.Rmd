@@ -93,7 +93,7 @@ for (iD in list.files(file.path(data_dir, "aceee-paper-data"))) {
 
 ## Motivation
 
-* The bigger the BMS the harder it is to find what matters. Locating problems is difficult and time-consuming.
+* The bigger the building management system (BMS) the harder it is to find what matters. Locating problems is difficult and time-consuming.
 * Help engineers explore unusual BMS behaviour.
 * Compare and learn from multiple buildings.
 
@@ -147,7 +147,7 @@ plot_overlaid_ts(100, TRUE)
 
 ### Data
 
-Focus on 597 AHU points from three separate buildings.
+Focus on 597 air handling unit (AHU) points from three separate buildings.
 
 \small
 
