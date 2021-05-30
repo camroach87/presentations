@@ -1,0 +1,106 @@
+---
+title: 'Value in Energy Data Seminar: POD Data Science Challenge'
+subtitle: 'Team "Cameron" solution'
+author: "Dr. Cameron Roach"
+date: "16 June, 2021"
+fontsize: 10pt
+output:
+  beamer_presentation:
+    theme: "metropolis"  # download from https://github.com/matze/mtheme
+    slide_level: 2
+    # includes:
+    #   in_header: preamble.tex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Introduction
+
+This presentation covers the winning solution by team "Cameron" for the Presumed Open Data: Data Science Challenge. It will focus on:
+
+1. data used
+2. methodology and techniques used
+3. example.
+
+## Data used
+
+**TODO: get correct names of data sources**
+
+Source | Available in forecast horizon? | Used?
+-------|--------------------------------|-------
+Electricity usage | Yes | Yes
+Weather at 6 locations | Yes | Yes
+Weather at PV station | No | No
+
+
+## Methodology
+
+Focused on producing accurate forecasts for both PV generation and electricity demand.
+
+1. Produced deterministic forecasts for electricity demand.
+2. Produced probabilistic forecasts for PV generation.
+3. Schedule battery based on PV quantile closest with energy closest to battery capacity.
+4. Scheduling battery discharge to produce flat evening demand.
+
+## Methodology
+
+### Electrity demand model
+
+* Gradient boosted decision trees using lightgbm
+* Variables used (feature engineering)
+* Fitting procedure (time series cross validation). Include cross validation error plot.
+
+## Methodology
+
+### Probabilistic PV generation model
+
+* Gradient boosted decision trees using lightgbm, but with different loss function
+* Variables used (different again)
+* Fitting procedure (same)
+
+## Methodology
+
+### Scheduling battery charging
+
+* Used PV generation quantile closest to 6 MWh.
+* Explain thinking behind this. Risk averse, if there is more PV then expected no problem, but if there is less PV then expected, can potentially miss out on PV energy if a higher quantile was scaled down.
+* No penalty for importing from grid, but want to use as much PV as possible.
+* Why was quantile closest to 6 MWh selected? Show example of what would happen if we took a high PV quantile on a low PV day - results in lots of PV being missed because of weird scaled shape.
+
+## Methodology
+
+### Scheduling battery discharging
+
+Ideally, we want demand to be completely flat to ensure the peak has been reduced as much as possible. Needed to calculate what the new peak would be:
+
+$$
+L^*_d = \frac{\sum_{k=32}^{42} L_{d,k} - 12}{| \left\{ 32, \ldots, 42 \right\}|} = \frac{\sum_{k=32}^{42} L_{d,k} - 12}{11},
+$$
+
+where $L^*_d$ is the new expected peak between periods 32 to 42 for day $d$.
+
+## Methodology
+
+From here, we can simply take the difference between the forecast electricity demand and $L^*_d$ to get the required discharge for each half-hourly period on day $d$:
+
+$$
+B_{d,k} = L_{d,k} - L^*_d,
+$$
+
+for $k \in \left\{ 32, \ldots, 42 \right\}$.
+
+Note, there were some checks to ensure battery constraints weren't violated, but these didn't actually come into play over the duration of the competition — $B_{d,k}$ values were consistently less than 2.5 MW in magnitude.
+
+## Example
+
+**TODO: Insert several plots showing how the demand forecast is built up. E.g. one plot with demand forecast, then layer in PV gen, then show scaled PV gen, then shade peak taken from demand (resulting in expected flat profile.**
+
+## Code
+
+All code used for this entry has been implemented as an R package.
+
+Available from [github.com/camroach87/pod-energy-comp](https://github.com/camroach87/pod-energy-comp).
+
+# Thank you! Questions?
