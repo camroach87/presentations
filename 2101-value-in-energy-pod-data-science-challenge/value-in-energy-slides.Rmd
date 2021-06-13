@@ -8,12 +8,90 @@ output:
   beamer_presentation:
     theme: "metropolis"  # download from https://github.com/matze/mtheme
     slide_level: 2
-    # includes:
-    #   in_header: preamble.tex
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE,
+	cache = TRUE
+)
+library(tidyverse)
+library(podEnergyComp)
+library(lubridate)
+
+fcst_start_date <- ymd("2020-07-03")
+
+# predict PV and demand
+demand.data <- load_demand_data()
+demand.cv <- cv_ts_folds(demand.data$datetime,
+                         start_date = fcst_start_date,
+                         horizon = 7, 
+                         iterations = 1)
+demand.forecast <- pred_demand(
+  select(demand.data, -datetime),
+  demand.cv[[1]]$train,
+  demand.cv[[1]]$test,
+  nrounds = 500L,
+  num_leaves = 10L,
+  learning_rate = 0.1,
+  obj = "regression",
+  metric = "regression"
+)
+
+pv.data <- load_pv_data()
+pv.cv <- cv_ts_folds(pv.data$datetime, 
+                     start_date = fcst_start_date,
+                     horizon = 7, 
+                     iterations = 1)
+pv.forecast <- pred_pv_quantile(
+  pv.data,
+  pv.cv[[1]]$train,
+  pv.cv[[1]]$test,
+  alpha = 0.5, # High PV generation so don't need to fit all quantiles
+  num_iterations = 250L,
+  num_leaves = 31L,
+  learning_rate = 0.03
+)
+
+# Tidy predictions
+demand.pred_df <- tibble(
+  datetime = getElement(demand.data[demand.cv[[1]]$test,], "datetime"),
+  demand_mw = demand.forecast
+)
+pv.pred_df <- tibble(
+  datetime = getElement(pv.data[pv.cv[[1]]$test,], "datetime"),
+  pv_power_mw = pv.forecast
+)
+fcst_df <- full_join(pv.pred_df, demand.pred_df, by = "datetime") %>% 
+  mutate(period = 2*hour(datetime) + minute(datetime)/30 + 1) %>% 
+  arrange(datetime)
+
+# schedule battery
+b_sched <- schedule_battery(fcst_df)
+bat_df <- format_charge_data(b_sched$B)
+
+# data for example plots
+tidy_schedule_df <- b_sched$B %>% 
+  as_tibble(rownames = "date") %>% 
+  pivot_longer(cols = -date, names_to = "period", values_to = "charge_mw") %>% 
+  mutate(datetime = ymd(date) + seconds((as.numeric(period)-1)*1800)) %>% 
+  select(datetime, charge_mw) %>% 
+  left_join(
+    pod %>% 
+      select(datetime, demand_mw, pv_power_mw),
+    by = "datetime"
+  ) %>% 
+  left_join(
+    fcst_df %>% 
+      select(datetime,
+             fcst_pv_power_mw = pv_power_mw,
+             fcst_demand_mw = demand_mw),
+    by = "datetime"
+  ) %>% 
+  filter(date(datetime) == ymd("2020-07-06")) %>% 
+  pivot_longer(-datetime)
 ```
 
 ## Introduction
@@ -24,15 +102,23 @@ This presentation covers the winning solution by team "Cameron" for the Presumed
 2. methodology and techniques used
 3. example.
 
+
 ## Data used
 
-**TODO: get correct names of data sources**
+\small
 
-Source | Available in forecast horizon? | Used?
--------|--------------------------------|-------
-Electricity usage | Yes | Yes
-Weather at 6 locations | Yes | Yes
-Weather at PV station | No | No
+Source | Interval | In horizon? | Used?
+-------|----------|--------------------------------|-------
+Electricity demand | Half-hourly | Yes | Yes
+Reanalysis temperature (6 locations) | Hourly | Yes | Yes
+Reanalysis irradiance (6 locations) | Hourly | Yes | Yes
+Solar PV generation | Half-hourly | No | Yes
+Solar irradiance data | Half-hourly | No | No
+PV module temperature | Half-hourly | No | No
+
+\normalsize
+
+Reanalysis temperature and irradiance data were linearly interpolated to create half-hourly values.
 
 
 ## Methodology
@@ -44,12 +130,17 @@ Focused on producing accurate forecasts for both PV generation and electricity d
 3. Schedule battery based on PV quantile closest with energy closest to battery capacity.
 4. Scheduling battery discharge to produce flat evening demand.
 
+
 ## Methodology
 
 ### Electrity demand model
 
+* Outlier removal
+* Only train on data in evening
 * Gradient boosted decision trees using lightgbm
 * Variables used (feature engineering)
+  * Lags
+  * Calendar variables (day of week, public holidays)
 * Fitting procedure (time series cross validation). Include cross validation error plot.
 
 ## Methodology
@@ -62,7 +153,7 @@ Focused on producing accurate forecasts for both PV generation and electricity d
 
 ## Methodology
 
-### Scheduling battery charging
+### Scheduling battery (charging)
 
 * Used PV generation quantile closest to 6 MWh.
 * Explain thinking behind this. Risk averse, if there is more PV then expected no problem, but if there is less PV then expected, can potentially miss out on PV energy if a higher quantile was scaled down.
@@ -71,7 +162,7 @@ Focused on producing accurate forecasts for both PV generation and electricity d
 
 ## Methodology
 
-### Scheduling battery discharging
+### Scheduling battery (discharging)
 
 Ideally, we want demand to be completely flat to ensure the peak has been reduced as much as possible. Needed to calculate what the new peak would be:
 
@@ -95,7 +186,170 @@ Note, there were some checks to ensure battery constraints weren't violated, but
 
 ## Example
 
-**TODO: Insert several plots showing how the demand forecast is built up. E.g. one plot with demand forecast, then layer in PV gen, then show scaled PV gen, then shade peak taken from demand (resulting in expected flat profile.**
+**TODO: show forecast PV distribution. Highlight which quantile gets chosen. Then show scaled version.**
+
+## Example
+
+```{r}
+pod %>%
+  filter(date(datetime) == ymd("2020-07-06")) %>% 
+  select(datetime,
+         `Electricity Demand` = demand_mw,
+         `PV Generation` = pv_power_mw) %>%
+  pivot_longer(-datetime) %>% 
+  ggplot(aes(x = datetime, y = value, colour = name)) +
+  geom_line() +
+  labs(title = "Actual Demand and PV Generation",
+       y = "Power (MW)",
+       x = "Date",
+       colour = "Data") +
+  ylim(-1.5,3.5)
+```
+
+
+## Example
+
+```{r}
+ggplot() +
+  geom_line(
+    data = filter(tidy_schedule_df, name == "fcst_pv_power_mw"),
+    mapping = aes(x = datetime, y = value, colour = "Forecast PV Generation")
+  ) +
+  labs(title = "Battery Scheduling",
+       y = "Power (MW)",
+       x = "Date",
+       colour = "Data") +
+  ylim(-1.5,4.0)
+```
+
+
+## Example
+
+```{r}
+ggplot() +
+  geom_line(
+    data = filter(tidy_schedule_df, name == "fcst_pv_power_mw"),
+    mapping = aes(x = datetime, y = value, colour = "Forecast PV Generation"),
+    alpha = 0.4
+  ) +
+  geom_col(
+    data = tidy_schedule_df %>% 
+      filter(name == "charge_mw",
+             value > 0),
+    mapping = aes(x = datetime, y = value, fill = "Charging")
+  ) +
+  labs(title = "Battery Scheduling",
+       y = "Power (MW)",
+       x = "Date",
+       colour = "Data",
+       fill = "Battery schedule") +
+  scale_fill_manual(values = c("forestgreen")) +
+  ylim(-1.5,4.0)
+```
+
+
+## Example
+
+```{r}
+ggplot() +
+  geom_line(
+    data = filter(tidy_schedule_df, name == "fcst_pv_power_mw"),
+    mapping = aes(x = datetime, y = value, colour = "Forecast PV Generation"),
+    alpha = 0.4
+  ) +
+  geom_line(
+    data = filter(tidy_schedule_df, name == "fcst_demand_mw"),
+    mapping = aes(x = datetime, y = value, colour = "Forecast Demand")
+  ) +
+  geom_col(
+    data = tidy_schedule_df %>% 
+      filter(name == "charge_mw",
+             value > 0),
+    mapping = aes(x = datetime, y = value, fill = "Charging"),
+    alpha = 0.4
+  ) +
+  labs(title = "Battery Scheduling",
+       y = "Power (MW)",
+       x = "Date",
+       colour = "Data",
+       fill = "Battery schedule") +
+  scale_fill_manual(values = c("forestgreen")) +
+  ylim(-1.5,4.0)
+```
+
+
+## Example
+
+```{r}
+ggplot() +
+  geom_line(
+    data = filter(tidy_schedule_df, name == "fcst_pv_power_mw"),
+    mapping = aes(x = datetime, y = value, colour = "Forecast PV Generation"),
+    alpha = 0.4
+  ) +
+  geom_line(
+    data = filter(tidy_schedule_df, name == "fcst_demand_mw"),
+    mapping = aes(x = datetime, y = value, colour = "Forecast Demand"),
+    alpha = 0.4
+  ) +
+  geom_line(
+    data = tidy_schedule_df %>% 
+      filter(name %in% c("fcst_demand_mw", "charge_mw")) %>% 
+      pivot_wider(names_from = name, values_from = value) %>% 
+      filter(!is.na(fcst_demand_mw)) %>% 
+      mutate(adj_fcst_demand_mw = fcst_demand_mw + charge_mw),
+    mapping = aes(x = datetime, y = adj_fcst_demand_mw, colour = "Reduced Demand"),
+  ) +
+  geom_col(
+    data = tidy_schedule_df %>% 
+      filter(name == "charge_mw",
+             value > 0),
+    mapping = aes(x = datetime, y = value, fill = "Charging"),
+    alpha = 0.4
+  ) +
+  geom_col(
+    data = tidy_schedule_df %>% 
+      filter(name == "charge_mw",
+             value < 0),
+    mapping = aes(x = datetime, y = value, fill = "Discharging")
+  ) +
+  labs(title = "Battery Scheduling",
+       y = "Power (MW)",
+       x = "Date",
+       colour = "Data",
+       fill = "Battery schedule") +
+  # scale_colour_manual(values = c("blue")) +
+  scale_fill_manual(values = c("forestgreen", "red")) +
+  ylim(-1.5,4.0)
+```
+
+## Example
+
+```{r}
+pod %>%
+  filter(date(datetime) == ymd("2020-07-06")) %>% 
+  select(datetime,
+         `Original Demand` = demand_mw) %>%
+  inner_join(
+    tidy_schedule_df %>% 
+      pivot_wider(names_from = name, values_from = value) %>% 
+      select(datetime, charge_mw) %>% 
+      mutate(charge_mw = if_else(charge_mw < 0, charge_mw, 0)),
+    by = "datetime"
+  ) %>% 
+  mutate(`Reduced Demand` = `Original Demand` + charge_mw) %>% 
+  select(datetime, contains("Demand")) %>% 
+  pivot_longer(-datetime) %>% 
+  mutate(name = fct_rev(name)) %>% 
+  ggplot(aes(x = datetime, y = value, colour = name)) +
+  geom_line() +
+  labs(title = "Actual and Reduced Demand",
+       y = "Power (MW)",
+       x = "Date",
+       colour = NULL) +
+  ylim(0,NA)
+```
+
 
 ## Code
 
