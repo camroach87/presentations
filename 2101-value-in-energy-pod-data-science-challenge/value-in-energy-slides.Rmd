@@ -127,7 +127,7 @@ Focused on producing accurate forecasts for both PV generation and electricity d
 
 1. Produced deterministic forecasts for electricity demand.
 2. Produced probabilistic forecasts for PV generation.
-3. Schedule battery based on PV quantile closest with energy closest to battery capacity.
+3. Schedule battery based on PV quantile with energy closest to battery capacity.
 4. Scheduling battery discharge to produce flat evening demand.
 
 
@@ -135,28 +135,73 @@ Focused on producing accurate forecasts for both PV generation and electricity d
 
 ### Electrity demand model
 
-* Outlier removal
-* Only train on data in evening
-* Gradient boosted decision trees using lightgbm
-* Variables used (feature engineering)
-  * Lags
-  * Calendar variables (day of week, public holidays)
-* Fitting procedure (time series cross validation). Include cross validation error plot.
+* Only fitted using evening data between 4:00pm and 9:00pm.
+* Three dates removed as they appeared to be outliers.
+
+```{r}
+outlier_dates <- ymd(c("2018-05-08", "2018-05-10", "2018-11-04"))
+pod %>% 
+  mutate(period = hh_to_period(datetime), 
+         date = date(datetime), 
+         outlier = if_else(date %in% outlier_dates, T, F),
+         outlier_date = if_else(outlier, date, NA_Date_)) %>%
+  filter(date < fcst_start_date,
+         period %in% 32:42) %>% 
+  ggplot(aes(x = period, y = demand_mw, group = date,
+             colour = factor(outlier_date))) + 
+  geom_line(alpha = 0.7) +
+  labs(title = "Demand outliers",
+       colour = "Outlier date",
+       x = "Date",
+       y = "Demand (MW)")
+```
+
+## Methodology
+
+The demand model used the following features:
+
+* half-hour period of day
+* day of year
+* day of week
+* public holidays
+* lagged demand (1-week)
+* temperature and lags (1, 2, 6, 12, 24, 48 and 96 half-hourly lags) for all 6 reanalysis locations
+* solar irradiance and lags (1, 2, 6, 12, 24, 48 and 96 half-hourly lags) for all 6 reanalysis locations
+* previous day's maximum, minimum and average temperatures across all 6 reanalysis locations
+* trend.
+
+Trained model to predict half-hourly demand using gradient boosted decision trees. Implemented using `lightgbm`.
+
+## Methodology
+
+Highly parameterized model! Needed to take care to avoid over-fitting. Used time series cross validation to tune **number of leaves** and **learning rate** parameters. Typically used 5 week-long folds and RMSE to assess, but experimented throughout.
+
+![](fig/cross-validation.png)
 
 ## Methodology
 
 ### Probabilistic PV generation model
 
-* Gradient boosted decision trees using lightgbm, but with different loss function
-* Variables used (different again)
-* Fitting procedure (same)
+The PV generation model was again fit using gradient boosted decision trees implemented using `lightgbm`.
+
+**TODO: discuss quantiles**
+
+The following features were used by the PV generation model:
+
+* half-hour period of day
+* day of month
+* day of year
+* lagged PV generation (1-week)
+* temperature and lags (1, 2, ..., 6 half-hourly lags) for all 6 reanalysis locations
+* solar irradiance and lags (1, 2, ..., 6 half-hourly lags) for all 6 reanalysis locations.
+
 
 ## Methodology
 
 ### Scheduling battery (charging)
 
 * Used PV generation quantile closest to 6 MWh.
-* Explain thinking behind this. Risk averse, if there is more PV then expected no problem, but if there is less PV then expected, can potentially miss out on PV energy if a higher quantile was scaled down.
+**TODO: Explain thinking behind this. Risk averse, if there is more PV then expected no problem, but if there is less PV then expected, can potentially miss out on PV energy if a higher quantile was scaled down.**
 * No penalty for importing from grid, but want to use as much PV as possible.
 * Why was quantile closest to 6 MWh selected? Show example of what would happen if we took a high PV quantile on a low PV day - results in lots of PV being missed because of weird scaled shape.
 
@@ -167,17 +212,18 @@ Focused on producing accurate forecasts for both PV generation and electricity d
 Ideally, we want demand to be completely flat to ensure the peak has been reduced as much as possible. Needed to calculate what the new peak would be:
 
 $$
-L^*_d = \frac{\sum_{k=32}^{42} L_{d,k} - 12}{| \left\{ 32, \ldots, 42 \right\}|} = \frac{\sum_{k=32}^{42} L_{d,k} - 12}{11},
+\sum_{k=32}^{42} \hat{L}_{d,k} = L^*_d \times \underbrace{|\left\{ 32, \ldots, 42 \right\}|}_{=11} + 12
+\quad \Rightarrow \quad
+L^*_d = \frac{\sum_{k=32}^{42} \hat{L}_{d,k} - 12}{11},
 $$
-
-where $L^*_d$ is the new expected peak between periods 32 to 42 for day $d$.
+where $L^*_d$ is the new expected peak between periods 32 to 42 for day $d$ and $\hat{L}_{d,k}$ is our forecast demand.
 
 ## Methodology
 
-From here, we can simply take the difference between the forecast electricity demand and $L^*_d$ to get the required discharge for each half-hourly period on day $d$:
+From here, we can simply take the difference between the forecast electricity demand and $L^*_d$ to obtain the required discharge for each half-hourly period on day $d$:
 
 $$
-B_{d,k} = L_{d,k} - L^*_d,
+B_{d,k} = L^*_d - \hat{L}_{d,k},
 $$
 
 for $k \in \left\{ 32, \ldots, 42 \right\}$.
