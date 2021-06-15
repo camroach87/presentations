@@ -111,7 +111,7 @@ This presentation covers the winning solution by team "Cameron" for the Presumed
 3. forecasting models
 4. scheduling methodology.
 
-A quick example for one of the competition forecast dates will be presented at the end.
+A short example for one of the competition forecast dates will be presented at the end.
 
 
 ## Data used
@@ -128,6 +128,8 @@ Solar irradiance data | Half-hourly | No | No
 PV module temperature | Half-hourly | No | No
 
 \normalsize
+
+Solar irradiance and PV module temperature data collected at the solar farm were not used.
 
 Reanalysis temperature and irradiance data were linearly interpolated to create half-hourly values.
 
@@ -181,6 +183,8 @@ pod %>%
 
 ## Methodology
 
+Trained model to predict half-hourly demand using **gradient boosted decision trees**. Implemented using `lightgbm`.
+
 The demand model used the following features:
 
 * half-hour period of day
@@ -193,11 +197,9 @@ The demand model used the following features:
 * previous day's maximum, minimum and average temperatures across all 6 reanalysis locations
 * trend.
 
-Trained model to predict half-hourly demand using gradient boosted decision trees. Implemented using `lightgbm`.
-
 ----
 
-Highly parameterized model! Needed to take care to avoid over-fitting. Used time series cross validation to tune **number of leaves** and **learning rate** parameters. Typically used 5 "week-long" folds and RMSE to assess accuracy, but experimented throughout.
+Highly parameterized model! Needed to take care to avoid over-fitting. Used time series cross validation to tune **number of leaves** and **learning rate** parameters. Typically used 5 "week-long" folds and RMSE to assess accuracy, but experimented throughout the competition.
 
 ![](fig/cross-validation.png)
 
@@ -205,7 +207,7 @@ Highly parameterized model! Needed to take care to avoid over-fitting. Used time
 
 ### Probabilistic PV generation model
 
-The PV generation model was again fit using gradient boosted decision trees implemented using `lightgbm`.
+The PV generation model was again fit using **gradient boosted decision trees** implemented using `lightgbm`.
 
 Originally focused on point forecasts for PV. Experimented with quantile forecasts towards the end of the competition.
 
